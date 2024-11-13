@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronRight, FileText, Folder } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -112,14 +112,7 @@ const NestedNavigation: React.FC<{
                 )}
                 asChild
               >
-                <Link href={currentSlug}>
-                  {item.children ? (
-                    <Folder className="mr-2 h-4 w-4" />
-                  ) : (
-                    <FileText className="mr-2 h-4 w-4" />
-                  )}
-                  {item.title}
-                </Link>
+                <Link href={currentSlug}>{item.title}</Link>
               </Button>
               {item.children && (
                 <Button
