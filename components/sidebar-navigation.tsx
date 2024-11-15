@@ -1,6 +1,6 @@
 'use client';
 
-import * as React from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
@@ -79,7 +79,7 @@ const NestedNavigation: React.FC<{
   basePath?: string;
 }> = ({ items, depth = 0, basePath = '/docs' }) => {
   const pathname = usePathname();
-  const [expandedFolders, setExpandedFolders] = React.useState<Set<string>>(
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set()
   );
 
@@ -94,6 +94,31 @@ const NestedNavigation: React.FC<{
       return newSet;
     });
   };
+
+  useEffect(() => {
+    const findExpandedFolders = (
+      items: PageItem[],
+      currentPath: string,
+      expandedSlugs: Set<string>,
+      currentBasePath: string = basePath
+    ) => {
+      for (const item of items) {
+        const itemPath = `${currentBasePath}/${item.slug}`;
+        if (currentPath.startsWith(itemPath) && item.children) {
+          expandedSlugs.add(item.slug);
+          findExpandedFolders(
+            item.children,
+            currentPath,
+            expandedSlugs,
+            itemPath
+          );
+        }
+      }
+    };
+    const expandedSlugs = new Set<string>();
+    findExpandedFolders(items, pathname, expandedSlugs);
+    setExpandedFolders(expandedSlugs);
+  }, [pathname, items, basePath]);
 
   return (
     <ul className={cn('space-y-1', depth > 0 && 'ml-4')}>

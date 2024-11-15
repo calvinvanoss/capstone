@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { SidebarNavigation } from '@/components/sidebar-navigation';
 import {
@@ -8,13 +11,49 @@ import {
 } from '@/components/ui/sidebar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, Palette } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { colorSchemes, ColorScheme } from '@/lib/color-schemes';
+
+const themes: { name: string; value: ColorScheme }[] = [
+  { name: 'Light', value: 'light' },
+  { name: 'Dark', value: 'dark' },
+  { name: 'Coffee', value: 'coffee' },
+];
 
 export default function DocsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [theme, setTheme] = useState<ColorScheme>(
+    (localStorage.getItem('theme') as ColorScheme) || 'light'
+  );
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    const colors = colorSchemes[theme];
+
+    Object.entries(colors).forEach(([key, value]) => {
+      root.style.setProperty(`--${key}`, value);
+    });
+
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('theme') as ColorScheme | null;
+    if (storedTheme && storedTheme in colorSchemes) {
+      setTheme(storedTheme);
+    }
+  }, []);
+
   return (
     <SidebarProvider>
       <div className="flex flex-col min-h-screen w-full">
@@ -26,13 +65,33 @@ export default function DocsLayout({
                 Documentation
               </Link>
             </div>
-            <div className="relative w-full max-w-sm">
-              <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search documentation..."
-                className="pl-8 w-full"
-              />
+            <div className="flex items-center space-x-4">
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search documentation..."
+                  className="pl-8 w-full"
+                />
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Palette className="h-[1.2rem] w-[1.2rem]" />
+                    <span className="sr-only">Toggle theme</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {themes.map((t) => (
+                    <DropdownMenuItem
+                      key={t.value}
+                      onClick={() => setTheme(t.value)}
+                    >
+                      {t.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </header>
