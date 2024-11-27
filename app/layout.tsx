@@ -1,23 +1,49 @@
-'use client';
-
-import React from 'react';
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import './globals.css';
-import { Authenticator } from '@aws-amplify/ui-react';
-import '@aws-amplify/ui-react/styles.css';
-import outputs from '@/amplify_outputs.json';
-import { Amplify } from 'aws-amplify';
+import { ThemeProvider } from '@/components/theme-provider';
+import Script from 'next/script';
 
-Amplify.configure(outputs);
+const inter = Inter({ subsets: ['latin'] });
+
+export const metadata: Metadata = {
+  title: 'Website Builder',
+  description: 'Build your Docusaurus-style website',
+};
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
-      <body>
-        <Authenticator>{children}</Authenticator>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script id="theme-script" strategy="beforeInteractive">
+          {`
+            (function() {
+              try {
+                var theme = localStorage.getItem('website-builder-theme');
+                if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              } catch (e) {}
+            })();
+          `}
+        </Script>
+      </head>
+      <body className={inter.className}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+          storageKey="website-builder-theme"
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
