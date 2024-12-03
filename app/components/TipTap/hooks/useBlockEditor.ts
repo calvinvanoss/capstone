@@ -1,7 +1,7 @@
 import { useEditor } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
 
-import { ExtensionKit } from '@/extensions/extension-kit'
+// import { ExtensionKit } from '@/extensions/extension-kit'
 
 declare global {
   interface Window {
@@ -40,20 +40,19 @@ export const useBlockEditor = ({}: {}) => {
           ctx.editor.commands.focus('start', { scrollIntoView: true })
         }
       },
-      extensions: [
-        ...ExtensionKit({
-          provider,
-        }),
-      editorProps: {
-        attributes: {
-          autocomplete: 'off',
-          autocorrect: 'off',
-          autocapitalize: 'off',
-          class: 'min-h-full',
-        },
-      },
-    },
-    [ydoc, provider],
+    //   extensions: [
+    //     ...ExtensionKit({
+    //       provider,
+    //     }),
+    //   editorProps: {
+    //     attributes: {
+    //       autocomplete: 'off',
+    //       autocorrect: 'off',
+    //       autocapitalize: 'off',
+    //       class: 'min-h-full',
+    //     },
+    //   },
+    // ]
   )
 
   window.editor = editor

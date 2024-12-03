@@ -3,7 +3,7 @@ import React, { useRef } from 'react'
 
 import { LinkMenu } from './LinkMenu'
 
-import '@/styles/index.css'
+import './styles/index.css'
 import { useBlockEditor } from './hooks/useBlockEditor'
 import { TextMenu } from './TextMenu/TextMenu'
 import { ContentItemMenu } from './ContentItemMenu/ContentItemMenu'

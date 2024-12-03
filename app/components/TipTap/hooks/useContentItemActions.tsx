@@ -2,6 +2,7 @@ import { Node } from '@tiptap/pm/model'
 import { NodeSelection } from '@tiptap/pm/state'
 import { Editor } from '@tiptap/react'
 import { useCallback } from 'react'
+import { Paragraph } from '@tiptap/extension-paragraph'
 
 const useContentItemActions = (editor: Editor, currentNode: Node | null, currentNodePos: number) => {
   const resetTextFormatting = useCallback(() => {

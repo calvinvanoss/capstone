@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+import { cn } from '../../utils'
 import { memo, useCallback } from 'react'
 
 export type ColorButtonProps = {
