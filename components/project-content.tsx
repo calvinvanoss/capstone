@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useProject } from './project-provider';
 import { Button } from '@/components/ui/button';
-import BasicEditor from './tiptap/BasicEditor';
+import BlockEditor from '@/app/components/TipTap/BlockEditor';
 
 export function ProjectContent({
   mode,
@@ -28,7 +28,7 @@ export function ProjectContent({
   return (
     <div >
       {mode === 'edit' ? (
-        <BasicEditor />
+        <BlockEditor />
       ) : (
         <div className="prose max-w-none">{content}</div>
       )}
