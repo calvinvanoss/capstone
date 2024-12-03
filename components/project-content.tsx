@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useProject } from './project-provider';
 import { Button } from '@/components/ui/button';
+import BasicEditor from './tiptap/BasicEditor';
 
 export function ProjectContent({
   mode,
@@ -25,13 +26,9 @@ export function ProjectContent({
   };
 
   return (
-    <div className="flex-1">
+    <div >
       {mode === 'edit' ? (
-        <textarea
-          className="w-full h-[calc(100vh-200px)] p-2 border rounded"
-          value={content}
-          onChange={(e) => handleContentChange(e.target.value)}
-        />
+        <BasicEditor />
       ) : (
         <div className="prose max-w-none">{content}</div>
       )}
