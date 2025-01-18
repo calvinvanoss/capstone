@@ -4,12 +4,11 @@ import { useProject } from './project-provider';
 import { useParams } from 'next/navigation';
 
 type BreadcrumbsProps = {
-  mode: 'edit' | 'view';
   activeTabId: string;
   path: string;
 };
 
-export function Breadcrumbs({ mode, activeTabId, path }: BreadcrumbsProps) {
+export function Breadcrumbs({ activeTabId, path }: BreadcrumbsProps) {
   const { project } = useProject();
   const params = useParams();
 
@@ -20,13 +19,10 @@ export function Breadcrumbs({ mode, activeTabId, path }: BreadcrumbsProps) {
 
   const pathParts = path.split('/').filter(Boolean);
   const breadcrumbs = [
-    {
-      name: activeTab.name,
-      href: `/project/${params.id}/${mode}/${activeTab.id}`,
-    },
+    { name: activeTab.name, href: `/project/${params.id}/${activeTab.id}` },
     ...pathParts.map((part, index) => ({
       name: part.replace(/-/g, ' '),
-      href: `/project/${params.id}/${mode}/${activeTab.id}/${pathParts.slice(0, index + 1).join('/')}`,
+      href: `/project/${params.id}/${activeTab.id}/${pathParts.slice(0, index + 1).join('/')}`,
     })),
   ];
 

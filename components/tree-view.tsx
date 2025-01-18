@@ -1,16 +1,34 @@
 'use client';
 
 import React, { useState } from 'react';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useDrag, useDrop } from 'react-dnd';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, ChevronDown, Grip } from 'lucide-react';
-import Link from 'next/link';
-import { useProject } from './project-provider';
-import { useParams } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  ChevronRight,
+  ChevronDown,
+  GripVertical,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
-export type TreeItem = {
+type TreeItem = {
   id: string;
   name: string;
   slug: string;
@@ -22,27 +40,36 @@ type TreeNodeProps = {
   item: TreeItem;
   onItemChange: (updatedItem: TreeItem) => void;
   onItemDelete: () => void;
-  editable: boolean;
-  path: string;
+  onItemCreate: (
+    parentId: string,
+    type: 'folder' | 'document',
+    index: number
+  ) => void;
+  depth: number;
+  index: number;
+  isEditing: boolean;
   activePath: string;
   activeTabId: string;
-  mode: 'edit' | 'view';
-  depth: number;
+  parentPath: string;
 };
 
 const TreeNode: React.FC<TreeNodeProps> = ({
   item,
   onItemChange,
   onItemDelete,
-  editable,
-  path,
+  onItemCreate,
+  depth,
+  index,
+  isEditing,
   activePath,
   activeTabId,
-  mode,
-  depth,
+  parentPath,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { project } = useProject();
+  const [isNameEditing, setIsNameEditing] = useState(false);
+  const [showAddButton, setShowAddButton] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
   const params = useParams();
 
   const [{ isDragging }, drag] = useDrag({
@@ -69,56 +96,162 @@ const TreeNode: React.FC<TreeNodeProps> = ({
     }
   };
 
-  const isActive = path === activePath;
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onItemChange({ ...item, name: e.target.value });
+  };
+
+  const handleEditToggle = () => {
+    setIsNameEditing(!isNameEditing);
+  };
+
+  const handleAddItem = (type: 'folder' | 'document') => {
+    onItemCreate(item.id, type, index + 1);
+    setIsDialogOpen(false);
+  };
+
+  const fullPath = `${parentPath}/${item.slug}`.replace(/^\//, '');
+  const isActive = activePath === fullPath;
 
   return (
-    <div ref={drop}>
+    <>
       <div
-        className={cn(
-          'flex items-center py-1 px-2 rounded-md transition-colors relative',
-          isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-muted',
-          isDragging ? 'opacity-50' : ''
-        )}
-        ref={drag}
+        ref={isEditing ? drop : undefined}
+        onMouseEnter={() => {
+          isEditing && setShowAddButton(true);
+          setIsHovering(true);
+        }}
+        onMouseLeave={() => {
+          isEditing && setShowAddButton(false);
+          setIsHovering(false);
+        }}
+        className="relative group"
       >
-        <div className="flex items-center flex-grow cursor-pointer pr-8">
-          {editable && (
-            <Grip className="mr-2 cursor-move h-4 w-4 text-muted-foreground flex-shrink-0" />
+        <div
+          className={cn(
+            'flex items-center py-1 px-2 rounded-md transition-colors relative',
+            isActive && !isEditing
+              ? 'bg-accent text-accent-foreground'
+              : 'hover:bg-muted',
+            isDragging ? 'opacity-50' : ''
           )}
-          <Link
-            href={`/project/${params.id}/${mode}/${activeTabId}/${path}`}
-            className={cn(
-              'flex-grow truncate',
-              isActive ? 'font-medium' : '',
-              item.type === 'folder' ? 'font-medium' : '',
-              !isActive && 'hover:text-primary'
-            )}
-            style={{ paddingLeft: `${depth * 12}px` }}
+          ref={isEditing ? drag : undefined}
+        >
+          <div
+            className="flex items-center flex-grow py-0.5 text-sm"
+            style={{ paddingLeft: `${depth * 8 + 4}px` }}
           >
-            {item.name}
-          </Link>
-        </div>
-        {item.type === 'folder' && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              'p-0 h-6 w-6 absolute right-2 top-1/2 transform -translate-y-1/2 transition-colors',
-              !isActive && 'hover:text-primary'
+            {isEditing && (
+              <div
+                className={cn(
+                  'absolute left-[-20px] w-6 h-full flex items-center justify-center transition-opacity duration-200',
+                  isHovering ? 'opacity-100' : 'opacity-0'
+                )}
+              >
+                <GripVertical className="h-3.5 w-3.5 text-muted-foreground cursor-move" />
+              </div>
             )}
-            onClick={toggleExpand}
-          >
-            {isExpanded ? (
-              <ChevronDown className="h-4 w-4" />
+            {isEditing && isNameEditing ? (
+              <Input
+                value={item.name}
+                onChange={handleNameChange}
+                onBlur={handleEditToggle}
+                className="h-5 py-0 px-1 text-sm"
+                autoFocus
+              />
             ) : (
-              <ChevronRight className="h-4 w-4" />
+              <>
+                {!isEditing ? (
+                  <Link
+                    href={`/project/${params.id}/${activeTabId}/${fullPath}`}
+                    className={cn(
+                      'flex-grow flex items-center truncate',
+                      isActive && !isEditing ? 'font-medium' : '',
+                      item.type === 'folder' ? 'font-medium' : '',
+                      !isActive && !isEditing && 'hover:text-primary'
+                    )}
+                  >
+                    <span className="truncate">{item.name}</span>
+                  </Link>
+                ) : (
+                  <span
+                    className={cn(
+                      'flex-grow flex items-center truncate cursor-pointer',
+                      isActive ? 'font-medium' : '',
+                      item.type === 'folder' ? 'font-medium' : '',
+                      !isActive && 'hover:text-primary'
+                    )}
+                    onClick={handleEditToggle}
+                  >
+                    {item.name}
+                  </span>
+                )}
+                {item.type === 'folder' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="p-0 h-5 w-5 ml-1"
+                    onClick={toggleExpand}
+                  >
+                    {isExpanded ? (
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    ) : (
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                )}
+              </>
             )}
-          </Button>
+          </div>
+        </div>
+        {isEditing && (
+          <div
+            className={cn(
+              'absolute right-[-20px] top-0 h-full flex items-center justify-center transition-opacity duration-200',
+              isHovering ? 'opacity-100' : 'opacity-0'
+            )}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 w-5 p-0 text-destructive"
+              onClick={onItemDelete}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+        {isEditing && showAddButton && (
+          <div className="absolute left-0 right-0 flex justify-center -mt-3 z-10">
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 w-6 p-0 rounded-full bg-background border-dashed"
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Item</DialogTitle>
+                </DialogHeader>
+                <div className="flex justify-around mt-4">
+                  <Button onClick={() => handleAddItem('folder')}>
+                    New Folder
+                  </Button>
+                  <Button onClick={() => handleAddItem('document')}>
+                    New File
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         )}
       </div>
       {isExpanded && item.children && (
         <div className="mt-1">
-          {item.children.map((child) => (
+          {item.children.map((child, childIndex) => (
             <TreeNode
               key={child.id}
               item={child}
@@ -134,40 +267,140 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                 );
                 onItemChange({ ...item, children: updatedChildren });
               }}
-              editable={editable}
-              path={`${path}/${child.slug}`}
+              onItemCreate={onItemCreate}
+              depth={depth + 1}
+              index={childIndex}
+              isEditing={isEditing}
               activePath={activePath}
               activeTabId={activeTabId}
-              mode={mode}
-              depth={depth + 1}
+              parentPath={fullPath}
             />
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 };
 
 type TreeViewProps = {
   tree: TreeItem[];
   onTreeChange: (newTree: TreeItem[]) => void;
-  editable: boolean;
+  isEditing: boolean;
   activePath: string;
   activeTabId: string;
-  mode: 'edit' | 'view';
 };
 
 export const TreeView: React.FC<TreeViewProps> = ({
   tree,
   onTreeChange,
-  editable,
+  isEditing,
   activePath,
   activeTabId,
-  mode,
 }) => {
+  const handleItemCreate = (
+    parentId: string,
+    type: 'folder' | 'document',
+    index: number
+  ) => {
+    const newItem: TreeItem = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: type === 'folder' ? 'New Folder' : 'New File',
+      slug: type === 'folder' ? 'new-folder' : 'new-file',
+      type: type,
+    };
+
+    const addItemToTree = (items: TreeItem[]): TreeItem[] => {
+      if (parentId === '') {
+        return [...items.slice(0, index), newItem, ...items.slice(index)];
+      }
+      return items.map((item) => {
+        if (item.id === parentId) {
+          return {
+            ...item,
+            children: [
+              ...(item.children || []).slice(0, index),
+              newItem,
+              ...(item.children || []).slice(index),
+            ],
+          };
+        } else if (item.children) {
+          return {
+            ...item,
+            children: addItemToTree(item.children),
+          };
+        }
+        return item;
+      });
+    };
+
+    const newTree = addItemToTree(tree);
+    onTreeChange(newTree);
+  };
+
+  const [isHoveringTop, setIsHoveringTop] = useState(false);
+
+  const handleAddTopLevelItem = (type: 'folder' | 'document') => {
+    const newItem: TreeItem = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: type === 'folder' ? 'New Folder' : 'New File',
+      slug: type === 'folder' ? 'new-folder' : 'new-file',
+      type: type,
+    };
+    onTreeChange([newItem, ...tree]);
+  };
+
   return (
-    <DndProvider backend={HTML5Backend}>
-      {tree.map((item) => (
+    <div className="relative">
+      {isEditing && tree.length > 0 && (
+        <div
+          className="absolute left-0 right-0 h-3 -top-3"
+          onMouseEnter={() => setIsHoveringTop(true)}
+          onMouseLeave={() => setIsHoveringTop(false)}
+        >
+          {isHoveringTop && (
+            <div className="absolute left-0 right-0 flex justify-center -mt-3 z-10">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 w-6 p-0 rounded-full bg-background border-dashed"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Add New Item</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex justify-around mt-4">
+                          <Button
+                            onClick={() => handleAddTopLevelItem('folder')}
+                          >
+                            New Folder
+                          </Button>
+                          <Button
+                            onClick={() => handleAddTopLevelItem('document')}
+                          >
+                            New File
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Add new item</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          )}
+        </div>
+      )}
+      {tree.map((item, index) => (
         <TreeNode
           key={item.id}
           item={item}
@@ -181,14 +414,15 @@ export const TreeView: React.FC<TreeViewProps> = ({
             const updatedTree = tree.filter((i) => i.id !== item.id);
             onTreeChange(updatedTree);
           }}
-          editable={editable}
-          path={item.slug}
+          onItemCreate={handleItemCreate}
+          depth={0}
+          index={index}
+          isEditing={isEditing}
           activePath={activePath}
           activeTabId={activeTabId}
-          mode={mode}
-          depth={0}
+          parentPath=""
         />
       ))}
-    </DndProvider>
+    </div>
   );
 };

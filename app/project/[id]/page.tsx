@@ -1,12 +1,15 @@
 'use client';
 
-import { useProject } from '@/components/project-provider';
-import { ProjectHome } from '@/components/project-home';
+import { ProjectProvider } from '@/components/project-provider';
+import { ProjectContent } from '@/components/project-content';
+import { useParams } from 'next/navigation';
 
-export default function ProjectPage() {
-  const { project } = useProject();
+export default function ProjectDefaultPage() {
+  const params = useParams();
 
-  if (!project) return <div>Loading...</div>;
-
-  return <ProjectHome mode="view" />;
+  return (
+    <ProjectProvider projectId={params.id as string}>
+      <ProjectContent path={'/'} />
+    </ProjectProvider>
+  );
 }

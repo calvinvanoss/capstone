@@ -1,10 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { useProject } from './project-provider';
-import { Button } from '@/components/ui/button';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { ProjectTabs } from './project-tabs';
-import { Pencil, Eye, Home } from 'lucide-react';
+import { Home } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -13,45 +13,48 @@ import {
 } from '@/components/ui/tooltip';
 import { ThemeToggle } from './theme-toggle';
 import Link from 'next/link';
+import { EditButton } from './edit-button';
+import { Input } from '@/components/ui/input';
 
-export function ProjectHeader({
-  mode,
-  activeTabId,
-}: {
-  mode: 'edit' | 'view';
-  activeTabId: string;
-}) {
-  const { project } = useProject();
-  const router = useRouter();
+export function ProjectHeader({ activeTabId }: { activeTabId: string }) {
+  const { project, updateProject } = useProject();
   const params = useParams();
-
-  const toggleMode = () => {
-    const newMode = mode === 'edit' ? 'view' : 'edit';
-    const currentPath = window.location.pathname;
-    if (
-      currentPath.endsWith(params.id as string) ||
-      currentPath.endsWith(`/${mode}`)
-    ) {
-      router.push(`/project/${params.id}/${newMode}`);
-    } else {
-      const newPath = currentPath.replace(`/${mode}/`, `/${newMode}/`);
-      router.push(newPath);
-    }
-  };
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState(project?.name || '');
+  const [isTitleEditing, setIsTitleEditing] = useState(false);
 
   if (!project) return null;
 
+  const handleEdit = () => {
+    setIsEditing(true);
+    setEditedName(project.name);
+  };
+
+  const handleSave = () => {
+    if (editedName.trim() !== '') {
+      updateProject({ ...project, name: editedName.trim() });
+    }
+    setIsEditing(false);
+    setIsTitleEditing(false);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setIsTitleEditing(false);
+    setEditedName(project.name);
+  };
+
   return (
-    <header className="flex justify-between items-center p-4 border-b">
-      <div className="flex items-center space-x-2">
+    <header className="flex justify-between items-center p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex items-center space-x-4">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
                 href="/dashboard"
-                className="p-2 rounded-md transition-colors duration-200 ease-in-out hover:bg-primary/10"
+                className="p-2 rounded-full transition-colors duration-200 ease-in-out hover:bg-muted"
               >
-                <Home className="h-5 w-5 text-primary" />
+                <Home className="h-5 w-5 text-muted-foreground" />
                 <span className="sr-only">Return to Dashboard</span>
               </Link>
             </TooltipTrigger>
@@ -60,36 +63,46 @@ export function ProjectHeader({
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        <Link
-          href={`/project/${params.id}/${mode}`}
-          className="group px-3 py-2 rounded-md transition-colors duration-200 ease-in-out hover:bg-primary/10"
-        >
-          <h1 className="text-2xl font-bold group-hover:text-primary group-hover:underline">
-            {project.name}
-          </h1>
-        </Link>
+        <EditButton
+          isEditing={isEditing}
+          onEdit={handleEdit}
+          onSave={handleSave}
+          onCancel={handleCancel}
+          className="mr-2"
+        />
+        {isEditing ? (
+          isTitleEditing ? (
+            <Input
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
+              onBlur={() => setIsTitleEditing(false)}
+              className="h-9 text-2xl font-bold px-3 py-1"
+              autoFocus
+            />
+          ) : (
+            <h1
+              className="text-2xl font-bold px-3 py-2 cursor-pointer hover:bg-muted rounded-md"
+              onClick={() => setIsTitleEditing(true)}
+            >
+              {editedName}
+            </h1>
+          )
+        ) : (
+          <Link
+            href={`/project/${params.id}`}
+            className="group px-3 py-2 rounded-md transition-colors duration-200 ease-in-out hover:bg-muted"
+          >
+            <h1 className="text-2xl font-bold group-hover:text-primary">
+              {project.name}
+            </h1>
+          </Link>
+        )}
       </div>
       <div className="flex-grow mx-4 max-w-2xl">
-        <ProjectTabs mode={mode} activeTabId={activeTabId} />
+        <ProjectTabs activeTabId={activeTabId} isEditing={isEditing} />
       </div>
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-4">
         <ThemeToggle />
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button onClick={toggleMode} size="icon">
-                {mode === 'edit' ? (
-                  <Eye className="h-4 w-4" />
-                ) : (
-                  <Pencil className="h-4 w-4" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{mode === 'edit' ? 'Switch to View' : 'Switch to Edit'}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
       </div>
     </header>
   );

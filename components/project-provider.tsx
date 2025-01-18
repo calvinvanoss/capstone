@@ -1,6 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 type SidebarItem = {
   id: string;
@@ -27,11 +29,21 @@ export type Project = {
 type ProjectContextType = {
   project: Project | null;
   updateProject: (updatedProject: Project) => void;
+  updateProjectName: (newName: string) => void;
+  updateTabName: (tabId: string, newName: string) => void;
+  reorderTabs: (newTabOrder: Tab[]) => void;
+  deleteTab: (tabId: string) => void;
+  addTab: (tabName: string) => void;
 };
 
 const ProjectContext = createContext<ProjectContextType>({
   project: null,
   updateProject: () => {},
+  updateProjectName: () => {},
+  updateTabName: () => {},
+  reorderTabs: () => {},
+  deleteTab: () => {},
+  addTab: () => {},
 });
 
 // Example project data (abbreviated for brevity)
@@ -207,9 +219,73 @@ export function ProjectProvider({
     console.log('Project updated:', updatedProject);
   };
 
+  const updateProjectName = (newName: string) => {
+    if (project) {
+      const updatedProject = { ...project, name: newName };
+      setProject(updatedProject);
+      // In a real scenario, you would send the updated project name to your API here
+      console.log('Project name updated:', newName);
+    }
+  };
+
+  const updateTabName = (tabId: string, newName: string) => {
+    if (project) {
+      const updatedTabs = project.tabs.map((tab) =>
+        tab.id === tabId ? { ...tab, name: newName } : tab
+      );
+      const updatedProject = { ...project, tabs: updatedTabs };
+      setProject(updatedProject);
+      // In a real scenario, you would send the updated tab name to your API here
+      console.log('Tab name updated:', tabId, newName);
+    }
+  };
+
+  const reorderTabs = (newTabOrder: Tab[]) => {
+    if (project) {
+      const updatedProject = { ...project, tabs: newTabOrder };
+      setProject(updatedProject);
+      // In a real scenario, you would send the updated tab order to your API here
+      console.log('Tabs reordered:', newTabOrder);
+    }
+  };
+
+  const deleteTab = (tabId: string) => {
+    if (project) {
+      const updatedTabs = project.tabs.filter((tab) => tab.id !== tabId);
+      const updatedProject = { ...project, tabs: updatedTabs };
+      setProject(updatedProject);
+      // In a real scenario, you would send the delete request to your API here
+      console.log('Tab deleted:', tabId);
+    }
+  };
+
+  const addTab = (tabName: string) => {
+    if (project) {
+      const newTab: Tab = {
+        id: `tab-${Date.now()}`, // Generate a unique ID
+        name: tabName,
+        sidebar: [], // Initialize with an empty sidebar
+      };
+      const updatedProject = { ...project, tabs: [...project.tabs, newTab] };
+      setProject(updatedProject);
+      // In a real scenario, you would send the new tab to your API here
+      console.log('New tab added:', newTab);
+    }
+  };
+
   return (
-    <ProjectContext.Provider value={{ project, updateProject }}>
-      {children}
+    <ProjectContext.Provider
+      value={{
+        project,
+        updateProject,
+        updateProjectName,
+        updateTabName,
+        reorderTabs,
+        deleteTab,
+        addTab,
+      }}
+    >
+      <DndProvider backend={HTML5Backend}>{children}</DndProvider>
     </ProjectContext.Provider>
   );
 }

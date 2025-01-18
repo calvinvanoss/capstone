@@ -12,6 +12,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Project } from '@/components/project-provider';
+import { ArrowRight } from 'lucide-react';
 
 const mockProjects: Project[] = [
   {
@@ -24,12 +25,21 @@ const mockProjects: Project[] = [
         id: 'tab1',
         name: 'Home',
         sidebar: [
-          { id: '1', name: 'Introduction' },
-          { id: '2', name: 'Getting Started' },
+          {
+            id: '1',
+            name: 'Introduction',
+            slug: 'introduction',
+            type: 'document',
+          },
+          {
+            id: '2',
+            name: 'Getting Started',
+            slug: 'getting-started',
+            type: 'document',
+          },
         ],
       },
     ],
-    activeTab: 'tab1',
   },
   {
     id: '2',
@@ -41,12 +51,11 @@ const mockProjects: Project[] = [
         id: 'tab1',
         name: 'Main',
         sidebar: [
-          { id: '1', name: 'Overview' },
-          { id: '2', name: 'Details' },
+          { id: '1', name: 'Overview', slug: 'overview', type: 'document' },
+          { id: '2', name: 'Details', slug: 'details', type: 'document' },
         ],
       },
     ],
-    activeTab: 'tab1',
   },
 ];
 
@@ -61,22 +70,36 @@ export function ProjectList() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {projects.map((project) => (
-        <Card key={project.id}>
+        <Card
+          key={project.id}
+          className="flex flex-col hover:shadow-md transition-shadow duration-200"
+        >
           <CardHeader>
-            <CardTitle>{project.name}</CardTitle>
-            <CardDescription>{project.description}</CardDescription>
+            <CardTitle className="text-lg font-semibold">
+              {project.name}
+            </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
+              {project.description}
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <p>
+          <CardContent className="flex-grow">
+            <p className="text-xs text-muted-foreground">
               Last edited: {new Date(project.lastEdited).toLocaleDateString()}
             </p>
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button asChild>
-              <Link href={`/project/${project.id}/edit`}>Edit</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href={`/project/${project.id}/view`}>View</Link>
+          <CardFooter>
+            <Button
+              asChild
+              variant="outline"
+              className="w-full hover:bg-accent hover:text-accent-foreground"
+            >
+              <Link
+                href={`/project/${project.id}`}
+                className="flex items-center justify-center"
+              >
+                Open Project
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
           </CardFooter>
         </Card>
