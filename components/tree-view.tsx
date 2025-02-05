@@ -186,18 +186,18 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                   </span>
                 )}
                 {item.type === 'folder' && (
-                  <Button
-                    variant="ghost"
+                    <Button
+                    variant="outline"
                     size="sm"
                     className="p-0 h-5 w-5 ml-1"
                     onClick={toggleExpand}
-                  >
+                    >
                     {isExpanded ? (
                       <ChevronDown className="h-3.5 w-3.5" />
                     ) : (
                       <ChevronRight className="h-3.5 w-3.5" />
                     )}
-                  </Button>
+                    </Button>
                 )}
               </>
             )}
