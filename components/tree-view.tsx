@@ -297,6 +297,8 @@ export const TreeView: React.FC<TreeViewProps> = ({
   activePath,
   activeTabId,
 }) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const handleItemCreate = (
     parentId: string,
     type: 'folder' | 'document',
@@ -347,6 +349,7 @@ export const TreeView: React.FC<TreeViewProps> = ({
       type: type,
     };
     onTreeChange([newItem, ...tree]);
+    setIsDialogOpen(false);
   };
 
   return (
@@ -362,7 +365,7 @@ export const TreeView: React.FC<TreeViewProps> = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Dialog>
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                       <DialogTrigger asChild>
                         <Button
                           variant="outline"
