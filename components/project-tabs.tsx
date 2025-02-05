@@ -224,7 +224,7 @@ export function ProjectTabs({
                     <Button
                       variant="outline"
                       size="icon"
-                      className="ml-2 h-9 w-9"
+                      className="ml-6 h-9 w-9"
                     >
                       <Plus className="h-[1.2rem] w-[1.2rem]" />
                       <span className="sr-only">Add Tab</span>
