@@ -10,10 +10,10 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { useParams, useRouter } from "next/navigation"
 
@@ -28,13 +28,16 @@ export function ProjectSidebar({
   const [isAddingRootFolder, setIsAddingRootFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState("")
   const [isEditing, setIsEditing] = useState(false)
+  const [editedTree, setEditedTree] = useState<any>(null)
   const router = useRouter()
   const params = useParams()
 
   const activeTab = project?.tabs.find((tab) => tab.id === activeTabId)
 
   const handleTreeChange = (newTree: any) => {
-    if (project && activeTab) {
+    if (isEditing) {
+      setEditedTree(newTree)
+    } else if (project && activeTab) {
       const updatedTabs = project.tabs.map((tab) => (tab.id === activeTab.id ? { ...tab, sidebar: newTree } : tab))
       updateProject({ ...project, tabs: updatedTabs })
     }
@@ -76,17 +79,22 @@ export function ProjectSidebar({
   }
 
   const startEditing = () => {
+    setEditedTree(activeTab?.sidebar || [])
     setIsEditing(true)
   }
 
   const confirmEditing = () => {
+    if (editedTree && project && activeTab) {
+      const updatedTabs = project.tabs.map((tab) => (tab.id === activeTab.id ? { ...tab, sidebar: editedTree } : tab))
+      updateProject({ ...project, tabs: updatedTabs })
+    }
     setIsEditing(false)
-    // Here you would typically save any changes made during editing
+    setEditedTree(null)
   }
 
   const cancelEditing = () => {
     setIsEditing(false)
-    // Here you would typically revert any changes made during editing
+    setEditedTree(null)
   }
 
   if (!project) return null
@@ -140,7 +148,7 @@ export function ProjectSidebar({
         </div>
       )}
       <TreeView
-        tree={activeTab?.sidebar || []}
+        tree={isEditing ? editedTree : activeTab?.sidebar || []}
         onTreeChange={handleTreeChange}
         activePath={activePath}
         activeTabId={activeTabId}
