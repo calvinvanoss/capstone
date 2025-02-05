@@ -37,7 +37,9 @@ export function Breadcrumbs({ activeTabId, path }: BreadcrumbsProps) {
             <Link
               href={crumb.href}
               className={`inline-flex items-center text-sm font-medium ${
-                index === breadcrumbs.length - 1
+                index === 0
+                  ? 'text-xl font-bold' // Increase text size for the first item
+                  : index === breadcrumbs.length - 1
                   ? 'text-primary'
                   : 'text-muted-foreground hover:text-primary'
               }`}
