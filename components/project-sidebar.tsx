@@ -136,7 +136,7 @@ export function ProjectSidebar({
             </Button>
           </div>
         ) : (
-          <Button variant="ghost" size="sm" onClick={startEditing} className="p-1 h-8 w-8">
+          <Button variant="outline" size="sm" onClick={startEditing} className="p-1 h-8 w-8">
             <Pencil className="h-4 w-4" />
           </Button>
         )}
