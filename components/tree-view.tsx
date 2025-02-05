@@ -426,6 +426,35 @@ export const TreeView: React.FC<TreeViewProps> = ({
           parentPath=""
         />
       ))}
+      <div>
+      <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 w-6 p-0 rounded-full bg-background border-dashed mt-4"
+                onClick={() => setIsDialogOpen(true)}
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Item</DialogTitle>
+              </DialogHeader>
+              <div className="flex justify-around mt-4">
+                <Button onClick={() => { handleAddTopLevelItem('folder'); setIsDialogOpen(false); }}>New Folder</Button>
+                <Button onClick={() => { handleAddTopLevelItem('document'); setIsDialogOpen(false); }}>New File</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </TooltipTrigger>
+      </Tooltip>
+      </ TooltipProvider>
+      </div>
     </div>
   );
 };
