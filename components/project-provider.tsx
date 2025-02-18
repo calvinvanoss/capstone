@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import type React from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
@@ -34,6 +35,7 @@ type ProjectContextType = {
   reorderTabs: (newTabOrder: Tab[]) => void;
   deleteTab: (tabId: string) => void;
   addTab: (tabName: string) => void;
+  addProject: (newProject: Project) => void;
 };
 
 const ProjectContext = createContext<ProjectContextType>({
@@ -44,6 +46,7 @@ const ProjectContext = createContext<ProjectContextType>({
   reorderTabs: () => {},
   deleteTab: () => {},
   addTab: () => {},
+  addProject: () => {},
 });
 
 // Example project data (abbreviated for brevity)
@@ -197,13 +200,7 @@ const exampleProject: Project = {
   ],
 };
 
-export function ProjectProvider({
-  children,
-  projectId,
-}: {
-  children: React.ReactNode;
-  projectId: string;
-}) {
+export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [project, setProject] = useState<Project | null>(null);
 
   useEffect(() => {
@@ -211,7 +208,7 @@ export function ProjectProvider({
     setTimeout(() => {
       setProject(exampleProject);
     }, 500); // Simulate a short delay
-  }, [projectId]);
+  }, []);
 
   const updateProject = (updatedProject: Project) => {
     setProject(updatedProject);
@@ -273,6 +270,13 @@ export function ProjectProvider({
     }
   };
 
+  const addProject = (newProject: Project) => {
+    // In a real scenario, you would send the new project to your API here
+    console.log('New project added:', newProject);
+    // Optionally, you could update the local state if you're keeping a list of projects
+    // setProjects(prevProjects => [...prevProjects, newProject])
+  };
+
   return (
     <ProjectContext.Provider
       value={{
@@ -283,9 +287,10 @@ export function ProjectProvider({
         reorderTabs,
         deleteTab,
         addTab,
+        addProject,
       }}
     >
-      <DndProvider backend={HTML5Backend}>{children}</DndProvider>
+      {children}
     </ProjectContext.Provider>
   );
 }

@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
-import { useDrag, useDrop } from 'react-dnd';
+import { DndProvider, useDrag, useDrop, XYCoord } from 'react-dnd';
 import { GripHorizontal, X, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 type DragItem = {
   index: number;
@@ -30,14 +31,14 @@ type DragItem = {
 };
 
 export function ProjectTabs({
+  project,
   activeTabId,
   isEditing,
 }: {
+  project: any;
   activeTabId: string;
   isEditing: boolean;
 }) {
-  const { project, updateProject, deleteTab, addTab } = useProject();
-  const params = useParams();
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editedTabNames, setEditedTabNames] = useState<{
     [key: string]: string;
@@ -76,7 +77,7 @@ export function ProjectTabs({
           ? { ...tab, name: editedTabNames[editingTabId] || tab.name }
           : tab
       );
-      updateProject({ ...project, tabs: updatedTabs });
+      console.log('update tabs api call');
       setEditingTabId(null);
     }
   };
@@ -86,16 +87,16 @@ export function ProjectTabs({
     const draggedTab = newTabs[dragIndex];
     newTabs.splice(dragIndex, 1);
     newTabs.splice(hoverIndex, 0, draggedTab);
-    updateProject({ ...project, tabs: newTabs });
+    console.log('update tabs api call');
   };
 
   const handleDeleteTab = (tabId: string) => {
-    deleteTab(tabId);
+    console.log('delete tab api call');
   };
 
   const handleAddTab = () => {
     if (newTabName.trim()) {
-      addTab(newTabName.trim());
+      console.log('add tab api call');
       setNewTabName('');
       setIsAddingTab(false);
     }
@@ -183,7 +184,7 @@ export function ProjectTabs({
         ) : isEditing ? (
           <span>{editedTabNames[tab.id] || tab.name}</span>
         ) : (
-          <Link href={`/project/${params.id}/${tab.id}`}>{tab.name}</Link>
+          <Link href={`/dashboard/${project.id}/${tab.id}`}>{tab.name}</Link>
         )}
         {isEditing && (
           <Button
@@ -207,7 +208,7 @@ export function ProjectTabs({
   return (
     <Tabs value={activeTabId} className="w-full">
       <TabsList className="w-full bg-transparent justify-start">
-        {project.tabs.map((tab, index) => (
+        {project.structure.map((tab, index) => (
           <TabItem
             key={tab.id}
             tab={tab}

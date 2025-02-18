@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import Script from 'next/script';
+import ConfigureAmplifyClientSide from '@/components/ConfigureAmplify';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -42,6 +43,7 @@ export default function RootLayout({
           disableTransitionOnChange
           storageKey="website-builder-theme"
         >
+          <ConfigureAmplifyClientSide />
           {children}
         </ThemeProvider>
       </body>

@@ -1,6 +1,3 @@
-'use client';
-
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,61 +8,17 @@ import {
   CardContent,
   CardFooter,
 } from '@/components/ui/card';
-import { Project } from '@/components/project-provider';
 import { ArrowRight } from 'lucide-react';
+import { cookiesClient } from '@/lib/amplify-utils';
 
-const mockProjects: Project[] = [
-  {
-    id: '1',
-    name: 'My First Project',
-    description: 'A sample project',
-    lastEdited: new Date().toISOString(),
-    tabs: [
-      {
-        id: 'tab1',
-        name: 'Home',
-        sidebar: [
-          {
-            id: '1',
-            name: 'Introduction',
-            slug: 'introduction',
-            type: 'document',
-          },
-          {
-            id: '2',
-            name: 'Getting Started',
-            slug: 'getting-started',
-            type: 'document',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Another Project',
-    description: 'Just another sample project',
-    lastEdited: new Date().toISOString(),
-    tabs: [
-      {
-        id: 'tab1',
-        name: 'Main',
-        sidebar: [
-          { id: '1', name: 'Overview', slug: 'overview', type: 'document' },
-          { id: '2', name: 'Details', slug: 'details', type: 'document' },
-        ],
-      },
-    ],
-  },
-];
+async function getProjects() {
+  const { data: projects, errors } = await cookiesClient.models.Project.list();
 
-export function ProjectList() {
-  const [projects, setProjects] = useState<Project[]>([]);
+  return projects;
+}
 
-  useEffect(() => {
-    // Use mock data instead of fetching from API
-    setProjects(mockProjects);
-  }, []);
+export async function ProjectList() {
+  const projects = await getProjects();
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -84,7 +37,7 @@ export function ProjectList() {
           </CardHeader>
           <CardContent className="flex-grow">
             <p className="text-xs text-muted-foreground">
-              Last edited: {new Date(project.lastEdited).toLocaleDateString()}
+              Last edited: {new Date(project.updatedAt).toLocaleDateString()}
             </p>
           </CardContent>
           <CardFooter>
@@ -94,7 +47,7 @@ export function ProjectList() {
               className="w-full hover:bg-accent hover:text-accent-foreground"
             >
               <Link
-                href={`/project/${project.id}`}
+                href={`/dashboard/${project.id}`}
                 className="flex items-center justify-center"
               >
                 Open Project

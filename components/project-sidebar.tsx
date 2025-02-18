@@ -1,11 +1,10 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { useProject } from "./project-provider"
-import { TreeView } from "./tree-view"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Plus, Pencil, Check, X } from "lucide-react"
+import { useState } from 'react';
+import { TreeView } from './tree-view';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Plus, Pencil, Check, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -14,90 +13,89 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { useParams, useRouter } from "next/navigation"
+} from '@/components/ui/dialog';
 
 export function ProjectSidebar({
+  project,
   activeTabId,
   activePath,
 }: {
-  activeTabId: string
-  activePath: string
+  project: any;
+  activeTabId: string;
+  activePath: string;
 }) {
-  const { project, updateProject, addTab, deleteTab } = useProject()
-  const [isAddingRootFolder, setIsAddingRootFolder] = useState(false)
-  const [newFolderName, setNewFolderName] = useState("")
-  const [isEditing, setIsEditing] = useState(false)
-  const [editedTree, setEditedTree] = useState<any>(null)
-  const router = useRouter()
-  const params = useParams()
+  const [isAddingRootFolder, setIsAddingRootFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTree, setEditedTree] = useState<any>(null);
 
-  const activeTab = project?.tabs.find((tab) => tab.id === activeTabId)
+  const activeTab = project?.structure.find((tab) => tab.id === activeTabId);
 
   const handleTreeChange = (newTree: any) => {
     if (isEditing) {
-      setEditedTree(newTree)
+      setEditedTree(newTree);
     } else if (project && activeTab) {
-      const updatedTabs = project.tabs.map((tab) => (tab.id === activeTab.id ? { ...tab, sidebar: newTree } : tab))
-      updateProject({ ...project, tabs: updatedTabs })
+      const updatedTabs = project.structure.map((tab) =>
+        tab.id === activeTab.id ? { ...tab, sidebar: newTree } : tab
+      );
+      console.log('update tabs api call');
     }
-  }
+  };
 
   const handleAddRootFolder = () => {
     if (newFolderName.trim() && project) {
-      const newFolderId = `folder-${Date.now()}`
+      const newFolderId = `folder-${Date.now()}`;
       const newFolder = {
         id: newFolderId,
         name: newFolderName.trim(),
         children: [],
-      }
+      };
 
       // Create a new tab
       const newTab = {
         id: newFolderId,
         name: newFolderName.trim(),
         sidebar: [newFolder],
-      }
+      };
 
       // Add the new tab to the project
-      const updatedTabs = [...project.tabs, newTab]
+      const updatedTabs = [...project.structure, newTab];
 
       // Update the project with the new tab
-      updateProject({ ...project, tabs: updatedTabs })
+      console.log('update tabs api call');
 
-      setNewFolderName("")
-      setIsAddingRootFolder(false)
-
-      // Navigate to the new tab
-      router.push(`/project/${params.id}/${newFolderId}`)
+      setNewFolderName('');
+      setIsAddingRootFolder(false);
     }
-  }
+  };
 
   const handleCancelAddFolder = () => {
-    setNewFolderName("")
-    setIsAddingRootFolder(false)
-  }
+    setNewFolderName('');
+    setIsAddingRootFolder(false);
+  };
 
   const startEditing = () => {
-    setEditedTree(activeTab?.sidebar || [])
-    setIsEditing(true)
-  }
+    setEditedTree(activeTab?.sidebar || []);
+    setIsEditing(true);
+  };
 
   const confirmEditing = () => {
     if (editedTree && project && activeTab) {
-      const updatedTabs = project.tabs.map((tab) => (tab.id === activeTab.id ? { ...tab, sidebar: editedTree } : tab))
-      updateProject({ ...project, tabs: updatedTabs })
+      const updatedTabs = project.structure.map((tab) =>
+        tab.id === activeTab.id ? { ...tab, sidebar: editedTree } : tab
+      );
+      console.log('update tabs api call');
     }
-    setIsEditing(false)
-    setEditedTree(null)
-  }
+    setIsEditing(false);
+    setEditedTree(null);
+  };
 
   const cancelEditing = () => {
-    setIsEditing(false)
-    setEditedTree(null)
-  }
+    setIsEditing(false);
+    setEditedTree(null);
+  };
 
-  if (!project) return null
+  if (!project) return null;
 
   return (
     <div className="w-64 border-r overflow-y-auto bg-background p-4">
@@ -111,7 +109,9 @@ export function ProjectSidebar({
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add New Root Folder</DialogTitle>
-              <DialogDescription>Enter a name for the new root folder.</DialogDescription>
+              <DialogDescription>
+                Enter a name for the new root folder.
+              </DialogDescription>
             </DialogHeader>
             <Input
               value={newFolderName}
@@ -128,15 +128,30 @@ export function ProjectSidebar({
         </Dialog>
         {isEditing ? (
           <div className="flex items-center space-x-1">
-            <Button variant="ghost" size="sm" onClick={confirmEditing} className="p-1 h-8 w-8">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={confirmEditing}
+              className="p-1 h-8 w-8"
+            >
               <Check className="h-4 w-4 text-green-500" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={cancelEditing} className="p-1 h-8 w-8">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={cancelEditing}
+              className="p-1 h-8 w-8"
+            >
               <X className="h-4 w-4 text-red-500" />
             </Button>
           </div>
         ) : (
-          <Button variant="outline" size="sm" onClick={startEditing} className="p-1 h-8 w-8">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={startEditing}
+            className="p-1 h-8 w-8"
+          >
             <Pencil className="h-4 w-4" />
           </Button>
         )}
@@ -148,13 +163,12 @@ export function ProjectSidebar({
         </div>
       )}
       <TreeView
-        tree={isEditing ? editedTree : activeTab?.sidebar || []}
+        tree={isEditing ? editedTree : activeTab?.children || []}
         onTreeChange={handleTreeChange}
         activePath={activePath}
         activeTabId={activeTabId}
         isEditing={isEditing}
       />
     </div>
-  )
+  );
 }
-

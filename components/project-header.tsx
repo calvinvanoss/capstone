@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useProject } from './project-provider';
 import { useParams } from 'next/navigation';
 import { ProjectTabs } from './project-tabs';
 import { Home } from 'lucide-react';
@@ -16,9 +15,13 @@ import Link from 'next/link';
 import { EditButton } from './edit-button';
 import { Input } from '@/components/ui/input';
 
-export function ProjectHeader({ activeTabId }: { activeTabId: string }) {
-  const { project, updateProject } = useProject();
-  const params = useParams();
+export function ProjectHeader({
+  project,
+  activeTabId,
+}: {
+  project: any;
+  activeTabId: string;
+}) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(project?.name || '');
   const [isTitleEditing, setIsTitleEditing] = useState(false);
@@ -31,9 +34,7 @@ export function ProjectHeader({ activeTabId }: { activeTabId: string }) {
   };
 
   const handleSave = () => {
-    if (editedName.trim() !== '') {
-      updateProject({ ...project, name: editedName.trim() });
-    }
+    console.log('update name api call');
     setIsEditing(false);
     setIsTitleEditing(false);
   };
@@ -89,7 +90,7 @@ export function ProjectHeader({ activeTabId }: { activeTabId: string }) {
           )
         ) : (
           <Link
-            href={`/project/${params.id}`}
+            href={`/dashboard/${project.id}`}
             className="group px-3 py-2 rounded-md transition-colors duration-200 ease-in-out hover:bg-muted"
           >
             <h1 className="text-2xl font-bold group-hover:text-primary">
@@ -99,7 +100,11 @@ export function ProjectHeader({ activeTabId }: { activeTabId: string }) {
         )}
       </div>
       <div className="flex-grow mx-4 max-w-2xl">
-        <ProjectTabs activeTabId={activeTabId} isEditing={isEditing} />
+        <ProjectTabs
+          project={project}
+          activeTabId={activeTabId}
+          isEditing={isEditing}
+        />
       </div>
       <div className="flex items-center space-x-4">
         <ThemeToggle />

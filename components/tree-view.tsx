@@ -31,8 +31,6 @@ import {
 type TreeItem = {
   id: string;
   name: string;
-  slug: string;
-  type: 'folder' | 'document';
   children?: TreeItem[];
 };
 
@@ -91,7 +89,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
 
   const toggleExpand = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (item.type === 'folder') {
+    if ('children' in item) {
       setIsExpanded(!isExpanded);
     }
   };
@@ -109,7 +107,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
     setIsDialogOpen(false);
   };
 
-  const fullPath = `${parentPath}/${item.slug}`.replace(/^\//, '');
+  const fullPath = `${parentPath}/${item.id}`;
   const isActive = activePath === fullPath;
 
   return (
@@ -162,11 +160,11 @@ const TreeNode: React.FC<TreeNodeProps> = ({
               <>
                 {!isEditing ? (
                   <Link
-                    href={`/project/${params.id}/${activeTabId}/${fullPath}`}
+                    href={`/dashboard/${params.slugs[0]}/${activeTabId}/${fullPath}`}
                     className={cn(
                       'flex-grow flex items-center truncate',
                       isActive && !isEditing ? 'font-medium' : '',
-                      item.type === 'folder' ? 'font-medium' : '',
+                      'children' in item ? 'font-medium' : '',
                       !isActive && !isEditing && 'hover:text-primary'
                     )}
                   >
@@ -177,7 +175,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                     className={cn(
                       'flex-grow flex items-center truncate cursor-pointer',
                       isActive ? 'font-medium' : '',
-                      item.type === 'folder' ? 'font-medium' : '',
+                      'children' in item ? 'font-medium' : '',
                       !isActive && 'hover:text-primary'
                     )}
                     onClick={handleEditToggle}
@@ -185,19 +183,19 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                     {item.name}
                   </span>
                 )}
-                {item.type === 'folder' && (
-                    <Button
+                {'children' in item && (
+                  <Button
                     variant="outline"
                     size="sm"
                     className="p-0 h-5 w-5 ml-1"
                     onClick={toggleExpand}
-                    >
+                  >
                     {isExpanded ? (
                       <ChevronDown className="h-3.5 w-3.5" />
                     ) : (
                       <ChevronRight className="h-3.5 w-3.5" />
                     )}
-                    </Button>
+                  </Button>
                 )}
               </>
             )}
@@ -304,12 +302,8 @@ export const TreeView: React.FC<TreeViewProps> = ({
     type: 'folder' | 'document',
     index: number
   ) => {
-    const newItem: TreeItem = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: type === 'folder' ? 'New Folder' : 'New File',
-      slug: type === 'folder' ? 'new-folder' : 'new-file',
-      type: type,
-    };
+    console.log('Create new item api call', parentId, type, index);
+    /*
 
     const addItemToTree = (items: TreeItem[]): TreeItem[] => {
       if (parentId === '') {
@@ -337,19 +331,17 @@ export const TreeView: React.FC<TreeViewProps> = ({
 
     const newTree = addItemToTree(tree);
     onTreeChange(newTree);
+    */
   };
 
   const [isHoveringTop, setIsHoveringTop] = useState(false);
 
   const handleAddTopLevelItem = (type: 'folder' | 'document') => {
-    const newItem: TreeItem = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: type === 'folder' ? 'New Folder' : 'New File',
-      slug: type === 'folder' ? 'new-folder' : 'new-file',
-      type: type,
-    };
+    console.log('Create new top level item api call', type);
+    /*
     onTreeChange([newItem, ...tree]);
     setIsDialogOpen(false);
+    */
   };
 
   return (
@@ -427,33 +419,47 @@ export const TreeView: React.FC<TreeViewProps> = ({
         />
       ))}
       <div>
-      <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-6 w-6 p-0 rounded-full bg-background border-dashed mt-4"
-                onClick={() => setIsDialogOpen(true)}
-              >
-                <Plus className="h-3 w-3" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Item</DialogTitle>
-              </DialogHeader>
-              <div className="flex justify-around mt-4">
-                <Button onClick={() => { handleAddTopLevelItem('folder'); setIsDialogOpen(false); }}>New Folder</Button>
-                <Button onClick={() => { handleAddTopLevelItem('document'); setIsDialogOpen(false); }}>New File</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </TooltipTrigger>
-      </Tooltip>
-      </ TooltipProvider>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-6 w-6 p-0 rounded-full bg-background border-dashed mt-4"
+                    onClick={() => setIsDialogOpen(true)}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New Item</DialogTitle>
+                  </DialogHeader>
+                  <div className="flex justify-around mt-4">
+                    <Button
+                      onClick={() => {
+                        handleAddTopLevelItem('folder');
+                        setIsDialogOpen(false);
+                      }}
+                    >
+                      New Folder
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        handleAddTopLevelItem('document');
+                        setIsDialogOpen(false);
+                      }}
+                    >
+                      New File
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </TooltipTrigger>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   );

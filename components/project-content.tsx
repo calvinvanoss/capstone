@@ -1,12 +1,16 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useProject } from './project-provider';
 import { EditButton } from './edit-button';
 import Editor from './yoopta/editor';
 
-export function ProjectContent({ path }: { path: string }) {
-  const { project, updateProject } = useProject();
+export function ProjectContent({
+  path,
+  projectId,
+}: {
+  path: string;
+  projectId: string;
+}) {
   const [content, setContent] = useState('');
   const [localContent, setLocalContent] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -19,13 +23,6 @@ export function ProjectContent({ path }: { path: string }) {
     setLocalContent(fetchedContent);
   }, [path]);
 
-  const handleContentChange = useCallback(
-    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setLocalContent(event.target.value);
-    },
-    []
-  );
-
   const handleEdit = () => {
     setIsEditing(true);
   };
@@ -33,12 +30,7 @@ export function ProjectContent({ path }: { path: string }) {
   const handleSave = () => {
     setContent(localContent);
     setIsEditing(false);
-    if (project) {
-      updateProject({
-        ...project,
-        // You'd need to update the correct part of the project based on the current path
-      });
-    }
+    // api call
   };
 
   const handleCancel = () => {
