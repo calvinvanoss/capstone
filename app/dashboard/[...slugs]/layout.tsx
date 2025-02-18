@@ -1,12 +1,8 @@
-'use client';
-// TODO: remove dnd provider, make this server component, add api call
-
 import { ProjectHeader } from '@/components/project-header';
 import { ProjectSidebar } from '@/components/project-sidebar';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import React from 'react';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import DndWrapper from '@/components/dnd-wrapper';
 
 export default function ProjectLayout({
   children,
@@ -46,7 +42,7 @@ export default function ProjectLayout({
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
+    <DndWrapper>
       <div className="flex flex-col min-h-screen">
         <ProjectHeader project={mockProject} activeTabId={activeTabId || ''} />
         <div className="flex flex-1 overflow-hidden">
@@ -71,6 +67,6 @@ export default function ProjectLayout({
           </main>
         </div>
       </div>
-    </DndProvider>
+    </DndWrapper>
   );
 }
