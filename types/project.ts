@@ -1,33 +1,45 @@
-import { z } from "zod"
+import { z } from 'zod';
 
-const baseTreeNodeSchema = z.object({
-    name: z.string(),
-    slug: z.string(),
-    type: z.enum(['tab', 'folder', 'document']),
-    content: z.string(), // s3 location
-})
+// Step 1: Define the base schema without recursion
+const baseTabSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  content: z.string(),
+});
 
-export type TreeNode = z.infer<typeof baseTreeNodeSchema> & {
-    children: TreeNode[]
+// Step 2: Define the recursive type manually
+type Tab = z.infer<typeof baseTabSchema> & {
+  children?: Tab[];
+};
+
+// Step 3: Create the recursive schema using `z.ZodType`
+const tabSchema: z.ZodType<Tab> = baseTabSchema.extend({
+  children: z.lazy(() => tabSchema.array()).optional(),
+});
+
+// Step 4: Define the schema for the array of tabs
+const tabsSchema = z.array(tabSchema);
+
+// Function to parse the stringified JSON
+function parseTabs(jsonString: string) {
+  const parsedJson = JSON.parse(jsonString);
+  return tabsSchema.parse(parsedJson);
 }
 
-const TreeNodeSchema: z.ZodType<TreeNode> = z.object({
-    name: z.string(),
-    slug: z.string(),
-    type: z.enum(['tab', 'folder', 'document']),
-    content: z.string(), // s3 location
-    children: z.lazy(() => TreeNodeSchema.array()),
-})
-
 export const projectSchema = z.object({
-    id: z.string(),
     name: z.string(),
-    description: z.string(),
-    tabs: TreeNodeSchema.array(),
-    updatedAt: z.string(),
+    tabs: z.string().transform((str) => {
+      try {
+        return tabsSchema.parse(JSON.parse(str)); // Parse the stringified JSON and validate it
+      } catch (error) {
+        throw new Error(`Invalid tabs JSON: ${error?.message}`);
+      }
+    }),
+    id: z.string().nullable(),
+    description: z.string().nullable(),
+    content: z.string().nullable(),
     createdAt: z.string(),
-})
+    updatedAt: z.string(),
+  });
 
-export type Project = z.infer<typeof projectSchema>
-
-export const projectListSchema = z.array(projectSchema)
+export type Project = z.infer<typeof projectSchema>;

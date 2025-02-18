@@ -14,16 +14,12 @@ type TreeItem = {
 };
 
 export function Breadcrumbs({ project, activeTabId, path }: BreadcrumbsProps) {
-  console.log('Breadcrumbs props:', { activeTabId, path });
-  console.log('Project:', project);
-
   if (!project) {
     console.log('No project found');
     return null;
   }
 
-  const activeTab = project.structure.find((tab) => tab.id === activeTabId);
-  console.log('Active tab:', activeTab);
+  const activeTab = project.tabs.find((tab) => tab.id === activeTabId);
 
   if (!activeTab) {
     console.log('No active tab found');
@@ -54,12 +50,10 @@ export function Breadcrumbs({ project, activeTabId, path }: BreadcrumbsProps) {
       }
     }
 
-    console.log('Found breadcrumbs:', breadcrumbs);
     return breadcrumbs;
   };
 
   const sidebarBreadcrumbs = findBreadcrumbsInTree(activeTab.children, path);
-  console.log('Sidebar breadcrumbs:', sidebarBreadcrumbs);
   const breadcrumbs = [
     { name: activeTab.name, href: `/dashboard/${project.id}/${activeTab.id}` },
     ...sidebarBreadcrumbs.map((item) => ({
@@ -67,8 +61,6 @@ export function Breadcrumbs({ project, activeTabId, path }: BreadcrumbsProps) {
       href: `/dashboard/${project.id}/${activeTab.id}/${item.path}`,
     })),
   ];
-
-  console.log('Final breadcrumbs:', breadcrumbs);
 
   // Fallback to path-based breadcrumbs if sidebar structure doesn't match
   if (breadcrumbs.length === 1) {

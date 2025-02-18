@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useProject } from './project-provider';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -22,7 +21,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { createTab } from '@/lib/server-actions';
 
 type DragItem = {
   index: number;
@@ -32,13 +31,13 @@ type DragItem = {
 
 export function ProjectTabs({
   project,
-  activeTabId,
   isEditing,
 }: {
   project: any;
-  activeTabId: string;
   isEditing: boolean;
 }) {
+  const params = useParams();
+  const activeTabId = params.slugs[1] || null;
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editedTabNames, setEditedTabNames] = useState<{
     [key: string]: string;
@@ -96,7 +95,7 @@ export function ProjectTabs({
 
   const handleAddTab = () => {
     if (newTabName.trim()) {
-      console.log('add tab api call');
+      createTab(newTabName, project);
       setNewTabName('');
       setIsAddingTab(false);
     }
@@ -208,7 +207,7 @@ export function ProjectTabs({
   return (
     <Tabs value={activeTabId} className="w-full">
       <TabsList className="w-full bg-transparent justify-start">
-        {project.structure.map((tab, index) => (
+        {project.tabs.map((tab, index) => (
           <TabItem
             key={tab.id}
             tab={tab}

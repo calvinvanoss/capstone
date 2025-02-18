@@ -7,7 +7,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const user = await AuthGetCurrentUserServer();
-  console.log(user);
 
   if (!user) {
     redirect('/auth');

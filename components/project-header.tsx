@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams } from 'next/navigation';
 import { ProjectTabs } from './project-tabs';
 import { Home } from 'lucide-react';
 import {
@@ -15,13 +14,7 @@ import Link from 'next/link';
 import { EditButton } from './edit-button';
 import { Input } from '@/components/ui/input';
 
-export function ProjectHeader({
-  project,
-  activeTabId,
-}: {
-  project: any;
-  activeTabId: string;
-}) {
+export function ProjectHeader({ project }: { project: any }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(project?.name || '');
   const [isTitleEditing, setIsTitleEditing] = useState(false);
@@ -100,11 +93,7 @@ export function ProjectHeader({
         )}
       </div>
       <div className="flex-grow mx-4 max-w-2xl">
-        <ProjectTabs
-          project={project}
-          activeTabId={activeTabId}
-          isEditing={isEditing}
-        />
+        <ProjectTabs project={project} isEditing={isEditing} />
       </div>
       <div className="flex items-center space-x-4">
         <ThemeToggle />

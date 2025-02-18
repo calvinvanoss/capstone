@@ -29,13 +29,13 @@ export function ProjectSidebar({
   const [isEditing, setIsEditing] = useState(false);
   const [editedTree, setEditedTree] = useState<any>(null);
 
-  const activeTab = project?.structure.find((tab) => tab.id === activeTabId);
+  const activeTab = project?.tabs.find((tab) => tab.id === activeTabId);
 
   const handleTreeChange = (newTree: any) => {
     if (isEditing) {
       setEditedTree(newTree);
     } else if (project && activeTab) {
-      const updatedTabs = project.structure.map((tab) =>
+      const updatedTabs = project.tabs.map((tab) =>
         tab.id === activeTab.id ? { ...tab, sidebar: newTree } : tab
       );
       console.log('update tabs api call');
@@ -59,7 +59,7 @@ export function ProjectSidebar({
       };
 
       // Add the new tab to the project
-      const updatedTabs = [...project.structure, newTab];
+      const updatedTabs = [...project.tabs, newTab];
 
       // Update the project with the new tab
       console.log('update tabs api call');
@@ -81,7 +81,7 @@ export function ProjectSidebar({
 
   const confirmEditing = () => {
     if (editedTree && project && activeTab) {
-      const updatedTabs = project.structure.map((tab) =>
+      const updatedTabs = project.tabs.map((tab) =>
         tab.id === activeTab.id ? { ...tab, sidebar: editedTree } : tab
       );
       console.log('update tabs api call');

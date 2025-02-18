@@ -12,7 +12,8 @@ const schema = a.schema({
       id: a.id(),
       name: a.string().required(),
       description: a.string(),
-      structure: a.string().required(), // JSON string
+      content: a.string(),
+      tabs: a.string().required(), // JSON string
     })
     .authorization((allow) => [allow.authenticated()]),
 });
