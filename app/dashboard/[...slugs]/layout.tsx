@@ -3,16 +3,8 @@ import { ProjectSidebar } from '@/components/project-sidebar';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import React from 'react';
 import DndWrapper from '@/components/dnd-wrapper';
-import { cookiesClient } from '@/lib/amplify-utils';
 import { projectSchema } from '@/types/project';
-
-async function getProject(projectId: string) {
-  const { data: project, errors } = await cookiesClient.models.Project.get({
-    id: projectId,
-  });
-
-  return project;
-}
+import { getProject } from '@/lib/server-actions';
 
 export default async function ProjectLayout({
   children,
@@ -22,16 +14,18 @@ export default async function ProjectLayout({
   params: { slugs: string[] };
 }) {
   const project = projectSchema.parse(await getProject(params.slugs[0]));
-  const projectId = params.slugs[0];
   const activeTabId = params.slugs[1] || null;
-  const activePath = params.slugs.slice(2).join('/') || '';
 
   const showSidebar = activeTabId !== null;
 
+  /*
   const mockProject = {
-    id: projectId,
+    id: params.slugs[0],
     name: 'mockProj',
     content: 'mockprojcontent',
+    createdAt: '2021-10-10',
+    updatedAt: '2021-10-10',
+    description: 'mockprojdesc',
     tabs: [
       {
         id: 'mock-tab-1',
@@ -49,8 +43,7 @@ export default async function ProjectLayout({
       },
     ],
   };
-
-  console.log(project);
+  */
 
   return (
     <DndWrapper>
@@ -58,21 +51,13 @@ export default async function ProjectLayout({
         <ProjectHeader project={project} />
         <div className="flex flex-1 overflow-hidden">
           {showSidebar && (
-            <ProjectSidebar
-              project={project}
-              activeTabId={activeTabId}
-              activePath={activePath}
-            />
+            <ProjectSidebar project={project} activeTabId={activeTabId} />
           )}
           <main
             className={`flex-1 overflow-y-auto ${showSidebar ? 'p-8' : 'pt-8 px-8'}`}
           >
             {showSidebar && (
-              <Breadcrumbs
-                project={project}
-                activeTabId={activeTabId || ''}
-                path={activePath}
-              />
+              <Breadcrumbs project={project} path={params.slugs.slice(1)} />
             )}
             {children}
           </main>

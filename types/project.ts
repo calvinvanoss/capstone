@@ -8,23 +8,17 @@ const baseTabSchema = z.object({
 });
 
 // Step 2: Define the recursive type manually
-type Tab = z.infer<typeof baseTabSchema> & {
-  children?: Tab[];
+export type Doc = z.infer<typeof baseTabSchema> & {
+  children?: Doc[];
 };
 
 // Step 3: Create the recursive schema using `z.ZodType`
-const tabSchema: z.ZodType<Tab> = baseTabSchema.extend({
+const tabSchema: z.ZodType<Doc> = baseTabSchema.extend({
   children: z.lazy(() => tabSchema.array()).optional(),
 });
 
 // Step 4: Define the schema for the array of tabs
 const tabsSchema = z.array(tabSchema);
-
-// Function to parse the stringified JSON
-function parseTabs(jsonString: string) {
-  const parsedJson = JSON.parse(jsonString);
-  return tabsSchema.parse(parsedJson);
-}
 
 export const projectSchema = z.object({
     name: z.string(),
@@ -32,7 +26,12 @@ export const projectSchema = z.object({
       try {
         return tabsSchema.parse(JSON.parse(str)); // Parse the stringified JSON and validate it
       } catch (error) {
-        throw new Error(`Invalid tabs JSON: ${error?.message}`);
+        if (error instanceof z.ZodError) {
+          console.error('Validation errors:', error.errors);
+        } else {
+          console.error('Unexpected error:', error);
+        }
+        return [];
       }
     }),
     id: z.string().nullable(),

@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -21,54 +22,32 @@ import {
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Label } from './ui/label';
+import { Project, Doc } from '@/types/project';
+import { createDocument } from '@/lib/server-actions';
 
-type TreeItem = {
-  id: string;
-  name: string;
-  children?: TreeItem[];
-};
-
-type TreeNodeProps = {
-  item: TreeItem;
-  onItemChange: (updatedItem: TreeItem) => void;
-  onItemDelete: () => void;
-  onItemCreate: (
-    parentId: string,
-    type: 'folder' | 'document',
-    index: number
-  ) => void;
-  depth: number;
+const TreeNode: React.FC<{
+  project: Project;
+  item: Doc;
   index: number;
+  depth: number;
   isEditing: boolean;
   activePath: string;
-  activeTabId: string;
   parentPath: string;
-};
-
-const TreeNode: React.FC<TreeNodeProps> = ({
-  item,
-  onItemChange,
-  onItemDelete,
-  onItemCreate,
-  depth,
-  index,
-  isEditing,
-  activePath,
-  activeTabId,
-  parentPath,
-}) => {
+}> = ({ project, item, index, depth, isEditing, activePath, parentPath }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isNameEditing, setIsNameEditing] = useState(false);
   const [showAddButton, setShowAddButton] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
-  const params = useParams();
+
+  const fullPath = `${parentPath}/${item.id}`;
+  const isActive = activePath === fullPath;
+
+  useEffect(() => {
+    if (activePath.includes(fullPath) && 'children' in item) {
+      setIsExpanded(true);
+    }
+  });
 
   const [{ isDragging }, drag] = useDrag({
     type: 'TREE_ITEM',
@@ -95,31 +74,23 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onItemChange({ ...item, name: e.target.value });
+    console.log('name change api call', e.target.value);
   };
 
   const handleEditToggle = () => {
     setIsNameEditing(!isNameEditing);
   };
 
-  const handleAddItem = (type: 'folder' | 'document') => {
-    onItemCreate(item.id, type, index + 1);
-    setIsDialogOpen(false);
-  };
-
-  const fullPath = `${parentPath}/${item.id}`;
-  const isActive = activePath === fullPath;
-
   return (
     <>
       <div
         ref={isEditing ? drop : undefined}
         onMouseEnter={() => {
-          isEditing && setShowAddButton(true);
+          setShowAddButton(true);
           setIsHovering(true);
         }}
         onMouseLeave={() => {
-          isEditing && setShowAddButton(false);
+          setShowAddButton(false);
           setIsHovering(false);
         }}
         className="relative group"
@@ -160,7 +131,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
               <>
                 {!isEditing ? (
                   <Link
-                    href={`/dashboard/${params.slugs[0]}/${activeTabId}/${fullPath}`}
+                    href={`/dashboard/${fullPath}`}
                     className={cn(
                       'flex-grow flex items-center truncate',
                       isActive && !isEditing ? 'font-medium' : '',
@@ -212,65 +183,34 @@ const TreeNode: React.FC<TreeNodeProps> = ({
               variant="ghost"
               size="sm"
               className="h-5 w-5 p-0 text-destructive"
-              onClick={onItemDelete}
+              onClick={() => console.log('delete item api call')}
             >
               <Trash2 className="h-3 w-3" />
             </Button>
           </div>
         )}
-        {isEditing && showAddButton && (
-          <div className="absolute left-0 right-0 flex justify-center -mt-3 z-10">
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-6 w-6 p-0 rounded-full bg-background border-dashed"
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New Item</DialogTitle>
-                </DialogHeader>
-                <div className="flex justify-around mt-4">
-                  <Button onClick={() => handleAddItem('folder')}>
-                    New Folder
-                  </Button>
-                  <Button onClick={() => handleAddItem('document')}>
-                    New File
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        )}
+        {showAddButton &&
+          (isExpanded ? (
+            <NewItemButton project={project} parentPath={fullPath} index={0} />
+          ) : (
+            <NewItemButton
+              project={project}
+              parentPath={parentPath}
+              index={index + 1}
+            />
+          ))}
       </div>
       {isExpanded && item.children && (
         <div className="mt-1">
           {item.children.map((child, childIndex) => (
             <TreeNode
               key={child.id}
+              project={project}
               item={child}
-              onItemChange={(updatedChild) => {
-                const updatedChildren = item.children!.map((c) =>
-                  c.id === updatedChild.id ? updatedChild : c
-                );
-                onItemChange({ ...item, children: updatedChildren });
-              }}
-              onItemDelete={() => {
-                const updatedChildren = item.children!.filter(
-                  (c) => c.id !== child.id
-                );
-                onItemChange({ ...item, children: updatedChildren });
-              }}
-              onItemCreate={onItemCreate}
-              depth={depth + 1}
               index={childIndex}
+              depth={depth + 1}
               isEditing={isEditing}
               activePath={activePath}
-              activeTabId={activeTabId}
               parentPath={fullPath}
             />
           ))}
@@ -280,187 +220,122 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   );
 };
 
-type TreeViewProps = {
-  tree: TreeItem[];
-  onTreeChange: (newTree: TreeItem[]) => void;
-  isEditing: boolean;
-  activePath: string;
-  activeTabId: string;
-};
-
-export const TreeView: React.FC<TreeViewProps> = ({
+export const TreeView = ({
+  project,
   tree,
-  onTreeChange,
   isEditing,
-  activePath,
-  activeTabId,
+}: {
+  project: Project;
+  tree: Doc[];
+  isEditing: boolean;
 }) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const handleItemCreate = (
-    parentId: string,
-    type: 'folder' | 'document',
-    index: number
-  ) => {
-    console.log('Create new item api call', parentId, type, index);
-    /*
-
-    const addItemToTree = (items: TreeItem[]): TreeItem[] => {
-      if (parentId === '') {
-        return [...items.slice(0, index), newItem, ...items.slice(index)];
-      }
-      return items.map((item) => {
-        if (item.id === parentId) {
-          return {
-            ...item,
-            children: [
-              ...(item.children || []).slice(0, index),
-              newItem,
-              ...(item.children || []).slice(index),
-            ],
-          };
-        } else if (item.children) {
-          return {
-            ...item,
-            children: addItemToTree(item.children),
-          };
-        }
-        return item;
-      });
-    };
-
-    const newTree = addItemToTree(tree);
-    onTreeChange(newTree);
-    */
-  };
-
+  const params = useParams();
   const [isHoveringTop, setIsHoveringTop] = useState(false);
 
-  const handleAddTopLevelItem = (type: 'folder' | 'document') => {
-    console.log('Create new top level item api call', type);
-    /*
-    onTreeChange([newItem, ...tree]);
-    setIsDialogOpen(false);
-    */
-  };
+  console.log('tree', tree);
 
   return (
     <div className="relative">
-      {isEditing && tree.length > 0 && (
-        <div
-          className="absolute left-0 right-0 h-3 -top-3"
-          onMouseEnter={() => setIsHoveringTop(true)}
-          onMouseLeave={() => setIsHoveringTop(false)}
-        >
-          {isHoveringTop && (
-            <div className="absolute left-0 right-0 flex justify-center -mt-3 z-10">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-6 w-6 p-0 rounded-full bg-background border-dashed"
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Add New Item</DialogTitle>
-                        </DialogHeader>
-                        <div className="flex justify-around mt-4">
-                          <Button
-                            onClick={() => handleAddTopLevelItem('folder')}
-                          >
-                            New Folder
-                          </Button>
-                          <Button
-                            onClick={() => handleAddTopLevelItem('document')}
-                          >
-                            New File
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Add new item</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          )}
-        </div>
-      )}
+      <div
+        className="absolute left-0 right-0 h-3 -top-3"
+        onMouseEnter={() => setIsHoveringTop(true)}
+        onMouseLeave={() => setIsHoveringTop(false)}
+      >
+        {(isHoveringTop || tree.length === 0) && (
+          <NewItemButton
+            project={project}
+            parentPath={
+              Array.isArray(params.slugs)
+                ? params.slugs.slice(0, 2).join('/')
+                : ''
+            }
+            index={0}
+          />
+        )}
+      </div>
       {tree.map((item, index) => (
         <TreeNode
           key={item.id}
+          project={project}
           item={item}
-          onItemChange={(updatedItem) => {
-            const updatedTree = tree.map((i) =>
-              i.id === updatedItem.id ? updatedItem : i
-            );
-            onTreeChange(updatedTree);
-          }}
-          onItemDelete={() => {
-            const updatedTree = tree.filter((i) => i.id !== item.id);
-            onTreeChange(updatedTree);
-          }}
-          onItemCreate={handleItemCreate}
-          depth={0}
           index={index}
+          depth={0}
           isEditing={isEditing}
-          activePath={activePath}
-          activeTabId={activeTabId}
-          parentPath=""
+          activePath={Array.isArray(params.slugs) ? params.slugs.join('/') : ''}
+          parentPath={
+            Array.isArray(params.slugs)
+              ? params.slugs.slice(0, 2).join('/')
+              : ''
+          }
         />
       ))}
-      <div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-6 w-6 p-0 rounded-full bg-background border-dashed mt-4"
-                    onClick={() => setIsDialogOpen(true)}
-                  >
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Item</DialogTitle>
-                  </DialogHeader>
-                  <div className="flex justify-around mt-4">
-                    <Button
-                      onClick={() => {
-                        handleAddTopLevelItem('folder');
-                        setIsDialogOpen(false);
-                      }}
-                    >
-                      New Folder
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        handleAddTopLevelItem('document');
-                        setIsDialogOpen(false);
-                      }}
-                    >
-                      New File
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </TooltipTrigger>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
+    </div>
+  );
+};
+
+const NewItemButton: React.FC<{
+  project: Project;
+  parentPath: string;
+  index: number;
+}> = ({ project, parentPath, index }) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newItemName, setNewItemName] = useState('');
+
+  return (
+    <div className="absolute left-0 right-0 flex justify-center -mt-3 z-10">
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 w-6 p-0 rounded-full bg-background border-dashed"
+          >
+            <Plus className="h-3 w-3" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Item</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="name"
+                value={newItemName}
+                onChange={(e) => setNewItemName(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() =>
+                createDocument(
+                  project,
+                  newItemName,
+                  parentPath,
+                  index,
+                  'folder'
+                )
+              }
+              disabled={!newItemName.trim()}
+            >
+              New Folder
+            </Button>
+            <Button
+              onClick={() =>
+                createDocument(project, newItemName, parentPath, index, 'file')
+              }
+              disabled={!newItemName.trim()}
+            >
+              New File
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

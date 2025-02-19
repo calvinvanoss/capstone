@@ -3,29 +3,16 @@
 import { useState } from 'react';
 import { TreeView } from './tree-view';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Plus, Pencil, Check, X } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { Pencil, Check, X } from 'lucide-react';
+import { Project } from '@/types/project';
 
 export function ProjectSidebar({
   project,
   activeTabId,
-  activePath,
 }: {
-  project: any;
+  project: Project;
   activeTabId: string;
-  activePath: string;
 }) {
-  const [isAddingRootFolder, setIsAddingRootFolder] = useState(false);
-  const [newFolderName, setNewFolderName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editedTree, setEditedTree] = useState<any>(null);
 
@@ -42,40 +29,8 @@ export function ProjectSidebar({
     }
   };
 
-  const handleAddRootFolder = () => {
-    if (newFolderName.trim() && project) {
-      const newFolderId = `folder-${Date.now()}`;
-      const newFolder = {
-        id: newFolderId,
-        name: newFolderName.trim(),
-        children: [],
-      };
-
-      // Create a new tab
-      const newTab = {
-        id: newFolderId,
-        name: newFolderName.trim(),
-        sidebar: [newFolder],
-      };
-
-      // Add the new tab to the project
-      const updatedTabs = [...project.tabs, newTab];
-
-      // Update the project with the new tab
-      console.log('update tabs api call');
-
-      setNewFolderName('');
-      setIsAddingRootFolder(false);
-    }
-  };
-
-  const handleCancelAddFolder = () => {
-    setNewFolderName('');
-    setIsAddingRootFolder(false);
-  };
-
   const startEditing = () => {
-    setEditedTree(activeTab?.sidebar || []);
+    setEditedTree(activeTab?.children || []);
     setIsEditing(true);
   };
 
@@ -100,32 +55,6 @@ export function ProjectSidebar({
   return (
     <div className="w-64 border-r overflow-y-auto bg-background p-4">
       <div className="flex justify-between items-center mb-4">
-        <Dialog open={isAddingRootFolder} onOpenChange={setIsAddingRootFolder}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-1" /> New Root Folder
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Root Folder</DialogTitle>
-              <DialogDescription>
-                Enter a name for the new root folder.
-              </DialogDescription>
-            </DialogHeader>
-            <Input
-              value={newFolderName}
-              onChange={(e) => setNewFolderName(e.target.value)}
-              placeholder="New folder name"
-            />
-            <DialogFooter>
-              <Button variant="outline" onClick={handleCancelAddFolder}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddRootFolder}>Add</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
         {isEditing ? (
           <div className="flex items-center space-x-1">
             <Button
@@ -156,17 +85,9 @@ export function ProjectSidebar({
           </Button>
         )}
       </div>
-      {activeTab && (
-        <div className="mb-4">
-          <p className="text-sm text-gray-500">Current Root Folder:</p>
-          <h2 className="text-lg font-semibold">{activeTab.name}</h2>
-        </div>
-      )}
       <TreeView
+        project={project}
         tree={isEditing ? editedTree : activeTab?.children || []}
-        onTreeChange={handleTreeChange}
-        activePath={activePath}
-        activeTabId={activeTabId}
         isEditing={isEditing}
       />
     </div>

@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
-import { DndProvider, useDrag, useDrop, XYCoord } from 'react-dnd';
+import { useDrag, useDrop, XYCoord } from 'react-dnd';
 import { GripHorizontal, X, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +22,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { createTab } from '@/lib/server-actions';
+import { Project } from '@/types/project';
 
 type DragItem = {
   index: number;
@@ -33,7 +34,7 @@ export function ProjectTabs({
   project,
   isEditing,
 }: {
-  project: any;
+  project: Project;
   isEditing: boolean;
 }) {
   const params = useParams();
@@ -95,7 +96,7 @@ export function ProjectTabs({
 
   const handleAddTab = () => {
     if (newTabName.trim()) {
-      createTab(newTabName, project);
+      createTab(project, newTabName);
       setNewTabName('');
       setIsAddingTab(false);
     }
@@ -215,42 +216,40 @@ export function ProjectTabs({
             ref={React.createRef()}
           />
         ))}
-        {isEditing && (
-          <TooltipProvider>
-            <Tooltip>
-              <Dialog open={isAddingTab} onOpenChange={setIsAddingTab}>
-                <DialogTrigger asChild>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="ml-6 h-9 w-9"
-                    >
-                      <Plus className="h-[1.2rem] w-[1.2rem]" />
-                      <span className="sr-only">Add Tab</span>
-                    </Button>
-                  </TooltipTrigger>
-                </DialogTrigger>
-                <TooltipContent>
-                  <p>Add new tab</p>
-                </TooltipContent>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Tab</DialogTitle>
-                  </DialogHeader>
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      value={newTabName}
-                      onChange={(e) => setNewTabName(e.target.value)}
-                      placeholder="Enter tab name"
-                    />
-                    <Button onClick={handleAddTab}>Add</Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </Tooltip>
-          </TooltipProvider>
-        )}
+        <TooltipProvider>
+          <Tooltip>
+            <Dialog open={isAddingTab} onOpenChange={setIsAddingTab}>
+              <DialogTrigger asChild>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="ml-6 h-9 w-9"
+                  >
+                    <Plus className="h-[1.2rem] w-[1.2rem]" />
+                    <span className="sr-only">Add Tab</span>
+                  </Button>
+                </TooltipTrigger>
+              </DialogTrigger>
+              <TooltipContent>
+                <p>Add new tab</p>
+              </TooltipContent>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Tab</DialogTitle>
+                </DialogHeader>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    value={newTabName}
+                    onChange={(e) => setNewTabName(e.target.value)}
+                    placeholder="Enter tab name"
+                  />
+                  <Button onClick={handleAddTab}>Add</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </Tooltip>
+        </TooltipProvider>
       </TabsList>
     </Tabs>
   );

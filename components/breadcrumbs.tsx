@@ -1,79 +1,28 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
+import { Project, Doc } from '@/types/project';
 
-type BreadcrumbsProps = {
-  project: any;
-  activeTabId: string;
-  path: string;
-};
-
-type TreeItem = {
-  id: string;
-  name: string;
-  children?: TreeItem[];
-};
-
-export function Breadcrumbs({ project, activeTabId, path }: BreadcrumbsProps) {
-  if (!project) {
-    console.log('No project found');
-    return null;
-  }
-
-  const activeTab = project.tabs.find((tab) => tab.id === activeTabId);
-
-  if (!activeTab) {
-    console.log('No active tab found');
-    return null;
-  }
-
-  const findBreadcrumbsInTree = (
-    items: TreeItem[],
-    targetPath: string
-  ): { name: string; path: string }[] => {
-    const pathParts = targetPath.split('/').filter(Boolean);
-    let currentItems = items;
-    const breadcrumbs: { name: string; path: string }[] = [];
-
-    for (const part of pathParts) {
-      const foundItem = currentItems.find(
-        (item) => item.id === part || item.id.endsWith(`/${part}`)
-      );
-      if (foundItem) {
-        breadcrumbs.push({ name: foundItem.name, path: foundItem.id });
-        if (foundItem.children) {
-          currentItems = foundItem.children;
-        } else {
-          break;
-        }
-      } else {
-        break;
+export function Breadcrumbs({
+  project,
+  path,
+}: {
+  project: Project;
+  path: string[];
+}) {
+  let currentNode: Doc | undefined;
+  let href = `/dashboard/${project.id}`;
+  const breadcrumbs = path.map(
+    (part, index) => (
+      (currentNode = currentNode
+        ? currentNode.children!.find((child) => child.id === part)
+        : project.tabs.find((tab) => tab.id === part)),
+      (href = `${href}/${part}`),
+      {
+        name: currentNode?.name,
+        href: `/dashboard/${project.id}/${path.slice(0, index + 1).join('/')}`,
       }
-    }
-
-    return breadcrumbs;
-  };
-
-  const sidebarBreadcrumbs = findBreadcrumbsInTree(activeTab.children, path);
-  const breadcrumbs = [
-    { name: activeTab.name, href: `/dashboard/${project.id}/${activeTab.id}` },
-    ...sidebarBreadcrumbs.map((item) => ({
-      name: item.name,
-      href: `/dashboard/${project.id}/${activeTab.id}/${item.path}`,
-    })),
-  ];
-
-  // Fallback to path-based breadcrumbs if sidebar structure doesn't match
-  if (breadcrumbs.length === 1) {
-    const pathParts = path.split('/').filter(Boolean);
-    breadcrumbs.push(
-      ...pathParts.map((part, index) => ({
-        name: part
-          .replace(/-/g, ' ')
-          .replace(/\b\w/g, (char) => char.toUpperCase()), // Format name
-        href: `/dashboard/${project.id}/${activeTab.id}/${pathParts.slice(0, index + 1).join('/')}`,
-      }))
-    );
-  }
+    )
+  );
 
   return (
     <nav className="flex mb-6" aria-label="Breadcrumb">

@@ -71,7 +71,8 @@ export function EmailVerification({
       await resendSignUpCode({ username: email });
       toast({
         title: 'Verification Email Sent',
-        description: 'A new verification email has been sent to your email address.',
+        description:
+          'A new verification email has been sent to your email address.',
       });
     } catch (error) {
       console.error('Error resending verification email:', error);
