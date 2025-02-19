@@ -3,7 +3,7 @@
 import type React from 'react';
 
 import { useState } from 'react';
-import { confirmSignUp } from 'aws-amplify/auth';
+import { confirmSignUp, resendSignUpCode } from 'aws-amplify/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -57,22 +57,58 @@ export function EmailVerification({
     }
   };
 
+  const handleResendVerification = async () => {
+    if (!email) {
+      toast({
+        title: 'Error',
+        description: 'Email is required to resend verification email.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    try {
+      console.log('Resending verification code to:', email);
+      await resendSignUpCode({ username: email });
+      toast({
+        title: 'Verification Email Sent',
+        description: 'A new verification email has been sent to your email address.',
+      });
+    } catch (error) {
+      console.error('Error resending verification email:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to resend verification email. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
-    <form onSubmit={handleVerification} className="space-y-4">
-      <div>
-        <Label htmlFor="verification-code">Verification Code</Label>
-        <Input
-          id="verification-code"
-          type="text"
-          placeholder="Enter verification code"
-          value={verificationCode}
-          onChange={(e) => setVerificationCode(e.target.value)}
-          required
-        />
-      </div>
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? 'Verifying...' : 'Verify Email'}
+    <div>
+      <form onSubmit={handleVerification} className="space-y-4">
+        <div>
+          <Label htmlFor="verification-code">Verification Code</Label>
+          <Input
+            id="verification-code"
+            type="text"
+            placeholder="Enter verification code"
+            value={verificationCode}
+            onChange={(e) => setVerificationCode(e.target.value)}
+            required
+          />
+        </div>
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? 'Verifying...' : 'Verify Email'}
+        </Button>
+      </form>
+      <Button
+        type="button"
+        className="mt-4"
+        onClick={handleResendVerification}
+        disabled={isLoading}
+      >
+        Resend Verification Email
       </Button>
-    </form>
+    </div>
   );
 }
