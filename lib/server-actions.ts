@@ -31,6 +31,21 @@ export async function createProject(name: string, description: string) {
   }
 }
 
+export async function deleteProject(projectId: string) {
+  const { data, errors } = await cookiesClient.models.Project.delete({
+    id: projectId,
+  })
+
+  if (errors) {
+    console.error("error:", errors)
+    throw new Error("Failed to delete project")
+  } else {
+    console.log("deleteProject:", data)
+  }
+
+  return data
+}
+
 // readable name to slug path
 function slugify(text: string): string {
   return text
