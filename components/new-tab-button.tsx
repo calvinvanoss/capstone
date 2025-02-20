@@ -21,13 +21,13 @@ import { createTab } from '@/lib/server-actions';
 import { Project } from '@/types/project';
 import { useRouter } from 'next/navigation';
 
-export function AddTabButton({ project }: { project: Project }) {
+export function NewTabButton({ project }: { project: Project }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [newTabName, setNewTabName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleAddTab = async () => {
+  const handleCreateTab = async () => {
     if (newTabName.trim()) {
       setIsLoading(true);
       try {
@@ -69,7 +69,7 @@ export function AddTabButton({ project }: { project: Project }) {
                 placeholder="Enter tab name"
               />
               <Button
-                onClick={handleAddTab}
+                onClick={handleCreateTab}
                 disabled={!newTabName.trim() || isLoading}
               >
                 {isLoading ? 'Adding...' : 'Add'}
@@ -82,4 +82,4 @@ export function AddTabButton({ project }: { project: Project }) {
   );
 }
 
-export default AddTabButton;
+export default NewTabButton;

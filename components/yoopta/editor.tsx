@@ -91,7 +91,6 @@ export default function Editor({ content }: { content: Content }) {
     content && content.content ? JSON.parse(content.content) : undefined
   );
   const [isEditing, setIsEditing] = useState(false);
-  console.log(value);
 
   const onChange = (
     value: YooptaContentValue,

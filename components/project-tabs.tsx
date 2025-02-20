@@ -9,7 +9,7 @@ import { useDrag, useDrop, XYCoord } from 'react-dnd';
 import { GripHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Project } from '@/types/project';
-import AddTabButton from './add-tab-button';
+import NewTabButton from './new-tab-button';
 
 type DragItem = {
   index: number;
@@ -192,7 +192,7 @@ export function ProjectTabs({
             ref={React.createRef()}
           />
         ))}
-        <AddTabButton project={project} />
+        <NewTabButton project={project} />
       </TabsList>
     </Tabs>
   );

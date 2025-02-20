@@ -1,3 +1,5 @@
+'use client';
+
 import { createDocument } from '@/lib/server-actions';
 import {
   Dialog,
@@ -14,7 +16,7 @@ import { Project } from '@/types/project';
 import { Label } from './ui/label';
 import { useRouter } from 'next/navigation';
 
-export function AddDocButton({
+export function NewDocButton({
   project,
   parentPath,
   index,
@@ -94,4 +96,4 @@ export function AddDocButton({
   );
 }
 
-export default AddDocButton;
+export default NewDocButton;

@@ -13,8 +13,9 @@ import { ThemeToggle } from './theme-toggle';
 import Link from 'next/link';
 import { EditButton } from './edit-button';
 import { Input } from '@/components/ui/input';
+import { Project } from '@/types/project';
 
-export function ProjectHeader({ project }: { project: any }) {
+export function ProjectHeader({ project }: { project: Project }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(project?.name || '');
   const [isTitleEditing, setIsTitleEditing] = useState(false);

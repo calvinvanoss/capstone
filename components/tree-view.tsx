@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Project, Doc } from '@/types/project';
-import { AddDocButton } from './add-doc-button';
+import { NewDocButton } from './new-doc-button';
 
 const TreeNode: React.FC<{
   project: Project;
@@ -176,9 +176,9 @@ const TreeNode: React.FC<{
         )}
         {showAddButton &&
           (isExpanded ? (
-            <AddDocButton project={project} parentPath={fullPath} index={0} />
+            <NewDocButton project={project} parentPath={fullPath} index={0} />
           ) : (
-            <AddDocButton
+            <NewDocButton
               project={project}
               parentPath={parentPath}
               index={index + 1}
@@ -225,7 +225,7 @@ export const TreeView = ({
         onMouseLeave={() => setIsHoveringTop(false)}
       >
         {(isHoveringTop || tree.length === 0) && (
-          <AddDocButton
+          <NewDocButton
             project={project}
             parentPath={
               Array.isArray(params.slugs)
