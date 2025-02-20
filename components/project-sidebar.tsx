@@ -50,8 +50,6 @@ export function ProjectSidebar({
     setEditedTree(null);
   };
 
-  if (!project) return null;
-
   return (
     <div className="w-64 border-r overflow-y-auto bg-background p-4">
       <div className="flex justify-between items-center mb-4">

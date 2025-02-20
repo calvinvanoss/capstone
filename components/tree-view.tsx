@@ -4,27 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  ChevronRight,
-  ChevronDown,
-  GripVertical,
-  Plus,
-  Trash2,
-} from 'lucide-react';
+import { ChevronRight, ChevronDown, GripVertical, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Label } from './ui/label';
 import { Project, Doc } from '@/types/project';
-import { createDocument } from '@/lib/server-actions';
+import { AddDocButton } from './add-doc-button';
 
 const TreeNode: React.FC<{
   project: Project;
@@ -191,9 +176,9 @@ const TreeNode: React.FC<{
         )}
         {showAddButton &&
           (isExpanded ? (
-            <NewItemButton project={project} parentPath={fullPath} index={0} />
+            <AddDocButton project={project} parentPath={fullPath} index={0} />
           ) : (
-            <NewItemButton
+            <AddDocButton
               project={project}
               parentPath={parentPath}
               index={index + 1}
@@ -240,7 +225,7 @@ export const TreeView = ({
         onMouseLeave={() => setIsHoveringTop(false)}
       >
         {(isHoveringTop || tree.length === 0) && (
-          <NewItemButton
+          <AddDocButton
             project={project}
             parentPath={
               Array.isArray(params.slugs)
@@ -267,73 +252,6 @@ export const TreeView = ({
           }
         />
       ))}
-    </div>
-  );
-};
-
-const NewItemButton: React.FC<{
-  project: Project;
-  parentPath: string;
-  index: number;
-}> = ({ project, parentPath, index }) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newItemName, setNewItemName] = useState('');
-
-  return (
-    <div className="absolute left-0 right-0 flex justify-center -mt-3 z-10">
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-6 w-6 p-0 rounded-full bg-background border-dashed"
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Item</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input
-                id="name"
-                value={newItemName}
-                onChange={(e) => setNewItemName(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              onClick={() =>
-                createDocument(
-                  project,
-                  newItemName,
-                  parentPath,
-                  index,
-                  'folder'
-                )
-              }
-              disabled={!newItemName.trim()}
-            >
-              New Folder
-            </Button>
-            <Button
-              onClick={() =>
-                createDocument(project, newItemName, parentPath, index, 'file')
-              }
-              disabled={!newItemName.trim()}
-            >
-              New File
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

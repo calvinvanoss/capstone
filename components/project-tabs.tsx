@@ -6,23 +6,10 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { useDrag, useDrop, XYCoord } from 'react-dnd';
-import { GripHorizontal, X, Plus } from 'lucide-react';
+import { GripHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { createTab } from '@/lib/server-actions';
 import { Project } from '@/types/project';
+import AddTabButton from './add-tab-button';
 
 type DragItem = {
   index: number;
@@ -44,8 +31,6 @@ export function ProjectTabs({
     [key: string]: string;
   }>({});
   const [inputWidth, setInputWidth] = useState<number>(0);
-  const [isAddingTab, setIsAddingTab] = useState(false);
-  const [newTabName, setNewTabName] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -53,8 +38,6 @@ export function ProjectTabs({
       inputRef.current.focus();
     }
   }, [editingTabId]);
-
-  if (!project) return null;
 
   const handleTabClick = (tabId: string) => {
     if (isEditing) {
@@ -93,14 +76,6 @@ export function ProjectTabs({
 
   const handleDeleteTab = (tabId: string) => {
     console.log('delete tab api call');
-  };
-
-  const handleAddTab = () => {
-    if (newTabName.trim()) {
-      createTab(project, newTabName);
-      setNewTabName('');
-      setIsAddingTab(false);
-    }
   };
 
   const TabItem = React.forwardRef<
@@ -217,40 +192,7 @@ export function ProjectTabs({
             ref={React.createRef()}
           />
         ))}
-        <TooltipProvider>
-          <Tooltip>
-            <Dialog open={isAddingTab} onOpenChange={setIsAddingTab}>
-              <DialogTrigger asChild>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="ml-6 h-9 w-9"
-                  >
-                    <Plus className="h-[1.2rem] w-[1.2rem]" />
-                    <span className="sr-only">Add Tab</span>
-                  </Button>
-                </TooltipTrigger>
-              </DialogTrigger>
-              <TooltipContent>
-                <p>Add new tab</p>
-              </TooltipContent>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New Tab</DialogTitle>
-                </DialogHeader>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    value={newTabName}
-                    onChange={(e) => setNewTabName(e.target.value)}
-                    placeholder="Enter tab name"
-                  />
-                  <Button onClick={handleAddTab}>Add</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </Tooltip>
-        </TooltipProvider>
+        <AddTabButton project={project} />
       </TabsList>
     </Tabs>
   );
