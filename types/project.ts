@@ -4,7 +4,7 @@ import { z } from 'zod';
 const baseDocSchema = z.object({
   id: z.string(),
   name: z.string(),
-  content: z.string().optional(),
+  content: z.string(),
 });
 
 // Step 2: Define the recursive type manually
@@ -34,9 +34,9 @@ export const projectSchema = z.object({
         return [];
       }
     }),
-    id: z.string().nullable(),
+    id: z.string(),
     description: z.string().nullable(),
-    content: z.string().nullable(),
+    content: z.string(),
     createdAt: z.string(),
     updatedAt: z.string(),
   });

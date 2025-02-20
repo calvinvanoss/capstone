@@ -9,5 +9,5 @@ export default async function ProjectDefaultPage({
 }) {
   const project = projectSchema.parse(await getProject(params.slugs[0]));
   const content = contentSchema.parse(await getContent(project, params.slugs));
-  return <Editor project={project} path={params.slugs} content={content} />;
+  return <Editor content={content} />;
 }

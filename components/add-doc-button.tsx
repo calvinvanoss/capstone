@@ -30,19 +30,18 @@ export function AddDocButton({
 
   const handleCreateDocument = async (type: 'folder' | 'file') => {
     if (newDocName.trim()) {
-        setIsLoading(true);
-        try {
-            await createDocument(project, newDocName, parentPath, index, type);
-            router.refresh();
-            await new Promise((resolve) => setTimeout(resolve, 500)); // wait for new tab to show on frontend
-            setIsOpen(false);
-            setNewDocName('');
-            setIsLoading(false);
-          } catch (error) {
-            console.error('Failed to create document:', error);
-          }
+      setIsLoading(true);
+      try {
+        await createDocument(project, newDocName, parentPath, index, type);
+        router.refresh();
+        await new Promise((resolve) => setTimeout(resolve, 500)); // wait for new tab to show on frontend
+        setIsOpen(false);
+        setNewDocName('');
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Failed to create document:', error);
+      }
     }
-    
   };
 
   return (
