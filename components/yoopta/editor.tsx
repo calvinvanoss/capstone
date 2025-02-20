@@ -1,3 +1,5 @@
+'use client';
+
 import YooptaEditor, {
   createYooptaEditor,
   type YooptaContentValue,
@@ -30,6 +32,9 @@ import { HeadingOne, HeadingThree, HeadingTwo } from '@yoopta/headings';
 import Code from '@yoopta/code';
 import Table from '@yoopta/table';
 import Divider from '@yoopta/divider';
+import { EditButton } from '../edit-button';
+import { Content, Project } from '@/types/project';
+import { createContent, updateContent } from '@/lib/server-actions';
 
 const MARKS = [Bold, Italic, CodeMark, Underline, Strike, Highlight];
 
@@ -77,9 +82,24 @@ const TOOLS = {
   },
 };
 
-export default function Editor({ isEditing }: { isEditing: boolean }) {
+export default function Editor({
+  project,
+  path,
+  content,
+}: {
+  project: Project;
+  path: string[];
+  content: Content;
+}) {
   const editor = useMemo(() => createYooptaEditor(), []);
-  const [value, setValue] = useState<YooptaContentValue>();
+  const [value, setValue] = useState<YooptaContentValue>(
+    content ? JSON.parse(content.content) : undefined
+  );
+  const [savedValue, setSavedValue] = useState<YooptaContentValue>(
+    content ? JSON.parse(content.content) : undefined
+  );
+  const [isEditing, setIsEditing] = useState(false);
+  console.log(value);
 
   const onChange = (
     value: YooptaContentValue,
@@ -88,20 +108,50 @@ export default function Editor({ isEditing }: { isEditing: boolean }) {
     setValue(value);
   };
 
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    setSavedValue(value);
+    setIsEditing(false);
+    if (value != undefined) {
+      if (content) {
+        updateContent(content.id, JSON.stringify(value));
+      } else {
+        createContent(project, path, JSON.stringify(value));
+      }
+    }
+  };
+
+  const handleCancel = () => {
+    setValue(savedValue);
+    setIsEditing(false);
+  };
+
   return (
-    <div className="border border-gray-300 rounded-md p-2">
-      {' '}
-      {/* Added border and padding */}
-      <YooptaEditor
-        key={isEditing ? 'editing' : 'readonly'} // forces rerender
-        editor={editor}
-        plugins={plugins}
-        value={value}
-        onChange={onChange}
-        tools={TOOLS}
-        marks={MARKS}
-        readOnly={!isEditing}
-      />
+    <div className="flex-1">
+      <div className="mb-4">
+        <EditButton
+          isEditing={isEditing}
+          onEdit={handleEdit}
+          onSave={handleSave}
+          onCancel={handleCancel}
+        />
+      </div>
+      <div className="border border-gray-300 rounded-md p-2">
+        <YooptaEditor
+          key={isEditing ? 'editing' : 'readonly'} // forces rerender
+          editor={editor}
+          plugins={plugins}
+          value={value}
+          onChange={onChange}
+          tools={TOOLS}
+          marks={MARKS}
+          readOnly={!isEditing}
+          autoFocus
+        />
+      </div>
     </div>
   );
 }

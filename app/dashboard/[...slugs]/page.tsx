@@ -1,9 +1,13 @@
-import { ProjectContent } from '@/components/project-content';
+import Editor from '@/components/yoopta/editor';
+import { getContent, getProject } from '@/lib/server-actions';
+import { projectSchema, contentSchema } from '@/types/project';
 
-export default function ProjectDefaultPage({
+export default async function ProjectDefaultPage({
   params,
 }: {
-  params: { id: string };
+  params: { slugs: string[] };
 }) {
-  return <ProjectContent path={'/'} projectId={params.id as string} />;
+  const project = projectSchema.parse(await getProject(params.slugs[0]));
+  const content = contentSchema.parse(await getContent(project, params.slugs));
+  return <Editor project={project} path={params.slugs} content={content} />;
 }

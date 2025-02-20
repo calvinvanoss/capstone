@@ -15,7 +15,7 @@ export function Breadcrumbs({
     (part, index) => (
       (currentNode = currentNode
         ? currentNode.children!.find((child) => child.id === part)
-        : project.tabs.find((tab) => tab.id === part)),
+        : project.children.find((tab) => tab.id === part)),
       (href = `${href}/${part}`),
       {
         name: currentNode?.name,

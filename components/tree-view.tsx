@@ -232,8 +232,6 @@ export const TreeView = ({
   const params = useParams();
   const [isHoveringTop, setIsHoveringTop] = useState(false);
 
-  console.log('tree', tree);
-
   return (
     <div className="relative">
       <div

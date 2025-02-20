@@ -10,18 +10,16 @@ export async function getProject(projectId: string) {
 
   if (errors) {
     console.error('error:', errors);
-  } else {
-    console.log('getProject:', data);
   }
 
   return data;
 }
 
-export async function createProject(name: string, description: string) {
+export async function createProject(name: string, description?: string) {
   const { data, errors } = await cookiesClient.models.Project.create({
     name,
     description,
-    tabs: '[]',
+    children: '[]',
   });
 
   if (errors) {
@@ -34,16 +32,16 @@ export async function createProject(name: string, description: string) {
 export async function deleteProject(projectId: string) {
   const { data, errors } = await cookiesClient.models.Project.delete({
     id: projectId,
-  })
+  });
 
   if (errors) {
-    console.error("error:", errors)
-    throw new Error("Failed to delete project")
+    console.error('error:', errors);
+    throw new Error('Failed to delete project');
   } else {
-    console.log("deleteProject:", data)
+    console.log('deleteProject:', data);
   }
 
-  return data
+  return data;
 }
 
 // readable name to slug path
@@ -60,9 +58,9 @@ function slugify(text: string): string {
 export async function createTab(project: Project, name: string) {
   const { data, errors } = await cookiesClient.models.Project.update({
     id: project.id,
-    tabs: JSON.stringify([
-      ...project.tabs,
-      { name, id: slugify(name), content: 'createTabContent', children: [] },
+    children: JSON.stringify([
+      ...project.children,
+      { name, id: slugify(name), children: [] },
     ]),
   });
 
@@ -84,10 +82,10 @@ export async function createDocument(
 
   const { data, errors } = await cookiesClient.models.Project.update({
     id: project.id,
-    tabs: JSON.stringify(
-      project.tabs.map((tab) => {
-        if (tab.id === parentPathArr[1]) {
-          let currentNode: Doc | undefined = tab;
+    children: JSON.stringify(
+      project.children.map((doc) => {
+        if (doc.id === parentPathArr[1]) {
+          let currentNode: Doc | undefined = doc;
           for (const path of parentPathArr.slice(2)) {
             currentNode = currentNode!.children!.find(
               (child) => child.id === path
@@ -100,11 +98,10 @@ export async function createDocument(
           children.splice(index, 0, {
             id: slugify(name),
             name,
-            content: 'createDocContent',
             children: type === 'folder' ? [] : undefined,
           });
         }
-        return tab;
+        return doc;
       })
     ),
   });
@@ -113,5 +110,84 @@ export async function createDocument(
     console.error('error:', errors);
   } else {
     console.log('createDocument:', data);
+  }
+}
+
+export async function getContent(project: Project, fullPath: string[]) {
+  let currentNode: Doc | Project | undefined = project;
+  if (fullPath.length > 1) {
+    for (const path of fullPath.slice(1)) {
+      currentNode = currentNode?.children!.find((child) => child.id === path);
+    }
+  }
+
+  if (currentNode && currentNode.content) {
+    const { data, errors } = await cookiesClient.models.Content.get({
+      id: currentNode.content,
+    });
+
+    if (errors) {
+      console.error('error:', errors);
+    } else {
+      console.log('getContent:', data);
+    }
+
+    if (data) {
+      return data;
+    }
+  }
+  return null;
+}
+
+export async function createContent(
+  project: Project,
+  fullPath: string[],
+  content: string
+) {
+  const { data: contentData, errors: contentErrors } =
+    await cookiesClient.models.Content.create({
+      content,
+    });
+
+  if (contentErrors) {
+    console.error('error:', contentErrors);
+  } else {
+    console.log('createContent content:', contentData);
+  }
+
+  if (contentData) {
+    let currentNode: Doc | Project | undefined = project;
+    if (fullPath.length > 1) {
+      for (const path of fullPath.slice(1)) {
+        currentNode = currentNode!.children!.find((child) => child.id === path);
+      }
+    }
+    currentNode!.content = contentData.id;
+
+    const { data: projectData, errors: projectErrors } =
+      await cookiesClient.models.Project.update({
+        id: project.id,
+        content: project.content,
+        children: JSON.stringify(project.children),
+      });
+
+    if (projectErrors) {
+      console.error('error:', projectErrors);
+    } else {
+      console.log('createContent project:', projectData);
+    }
+  }
+}
+
+export async function updateContent(id: string, content: string) {
+  const { data, errors } = await cookiesClient.models.Content.update({
+    id,
+    content,
+  });
+
+  if (errors) {
+    console.error('error:', errors);
+  } else {
+    console.log('updateContent:', data);
   }
 }
