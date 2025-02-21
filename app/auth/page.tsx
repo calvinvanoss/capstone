@@ -51,7 +51,6 @@ export default function AuthPage() {
           'Failed to sign in. Please check your credentials and try again.',
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
     }
   };
