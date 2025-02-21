@@ -15,7 +15,13 @@ import { EditButton } from './edit-button';
 import { Input } from '@/components/ui/input';
 import { Project } from '@/types/project';
 
-export function ProjectHeader({ project }: { project: Project }) {
+export function ProjectHeader({
+  project,
+  slugs,
+}: {
+  project: Project;
+  slugs: string[];
+}) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(project?.name || '');
   const [isTitleEditing, setIsTitleEditing] = useState(false);
@@ -84,7 +90,7 @@ export function ProjectHeader({ project }: { project: Project }) {
           )
         ) : (
           <Link
-            href={`/dashboard/${project.id}`}
+            href={`/${project.id}`}
             className="group px-3 py-2 rounded-md transition-colors duration-200 ease-in-out hover:bg-muted"
           >
             <h1 className="text-2xl font-bold group-hover:text-primary">
@@ -94,7 +100,7 @@ export function ProjectHeader({ project }: { project: Project }) {
         )}
       </div>
       <div className="flex-grow mx-4 max-w-2xl">
-        <ProjectTabs project={project} isEditing={isEditing} />
+        <ProjectTabs project={project} slugs={slugs} isEditing={isEditing} />
       </div>
       <div className="flex items-center space-x-4">
         <ThemeToggle />

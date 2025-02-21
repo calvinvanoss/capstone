@@ -52,8 +52,6 @@ export async function deleteProject(projectId: string) {
   if (errors) {
     console.error('error:', errors);
     throw new Error('Failed to delete project');
-  } else {
-    console.log('deleteProject:', data);
   }
 
   return data;

@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { ChevronRight, ChevronDown, GripVertical, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
 import { Project, DocNode } from '@/types/project';
 import { NewDocButton } from './new-doc-button';
 
@@ -116,7 +115,7 @@ const TreeNode: React.FC<{
               <>
                 {!isEditing ? (
                   <Link
-                    href={`/dashboard/${fullPath}`}
+                    href={`/${fullPath}`}
                     className={cn(
                       'flex-grow flex items-center truncate',
                       isActive && !isEditing ? 'font-medium' : '',
@@ -207,14 +206,15 @@ const TreeNode: React.FC<{
 
 export const TreeView = ({
   project,
+  slugs,
   tree,
   isEditing,
 }: {
   project: Project;
+  slugs: string[];
   tree: DocNode[];
   isEditing: boolean;
 }) => {
-  const params = useParams();
   const [isHoveringTop, setIsHoveringTop] = useState(false);
 
   return (
@@ -227,11 +227,7 @@ export const TreeView = ({
         {(isHoveringTop || tree.length === 0) && (
           <NewDocButton
             project={project}
-            parentPath={
-              Array.isArray(params.slugs)
-                ? params.slugs.slice(0, 2).join('/')
-                : params.slugs
-            }
+            parentPath={slugs.slice(0, 2).join('/')}
             index={0}
           />
         )}
@@ -244,14 +240,8 @@ export const TreeView = ({
           index={index}
           depth={0}
           isEditing={isEditing}
-          activePath={
-            Array.isArray(params.slugs) ? params.slugs.join('/') : params.slugs
-          }
-          parentPath={
-            Array.isArray(params.slugs)
-              ? params.slugs.slice(0, 2).join('/')
-              : params.slugs
-          }
+          activePath={slugs.join('/')}
+          parentPath={slugs.slice(0, 2).join('/')}
         />
       ))}
     </div>

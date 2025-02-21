@@ -1,28 +1,30 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { Project, DocNode } from '@/types/project';
+import { Project } from '@/types/project';
 
 export function Breadcrumbs({
   project,
-  path,
+  slugs,
 }: {
   project: Project;
-  path: string[];
+  slugs: string[];
 }) {
-  let currentNode: DocNode | undefined;
-  let href = `/dashboard/${project.id}`;
-  const breadcrumbs = path.map(
-    (part, index) => (
-      (currentNode = currentNode
-        ? currentNode.children!.find((child) => child.slug === part)
-        : project.structure.find((tab) => tab.slug === part)),
-      (href = `${href}/${part}`),
-      {
-        name: currentNode?.name,
-        href: `/dashboard/${project.id}/${path.slice(0, index + 1).join('/')}`,
-      }
-    )
-  );
+  if (slugs.length === 1) {
+    return null;
+  }
+
+  // TODO: cleanup this type check for graceful error handling
+  let currentNode = project.structure.find((tab) => tab.slug === slugs[1])!;
+  let href = `/${project.id}/${currentNode.slug}`;
+  const breadcrumbs = [{ name: project.name, href }];
+  for (const slug of slugs.slice(2)) {
+    currentNode = currentNode.children!.find((child) => child.slug === slug)!;
+    href += `/${currentNode.slug}`;
+    breadcrumbs.push({
+      name: currentNode.name,
+      href,
+    });
+  }
 
   return (
     <nav className="flex mb-6" aria-label="Breadcrumb">

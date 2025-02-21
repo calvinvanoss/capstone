@@ -51,7 +51,7 @@ export async function ProjectList() {
               className="hover:bg-accent hover:text-accent-foreground"
             >
               <Link
-                href={`/dashboard/${project.id}`}
+                href={`/${project.id}`}
                 className="flex items-center justify-center"
               >
                 Open Project

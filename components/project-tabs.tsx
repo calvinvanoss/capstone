@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { useDrag, useDrop, XYCoord } from 'react-dnd';
 import { GripHorizontal, X } from 'lucide-react';
@@ -19,19 +18,21 @@ type DragItem = {
 
 export function ProjectTabs({
   project,
+  slugs,
   isEditing,
 }: {
   project: Project;
+  slugs: string[];
   isEditing: boolean;
 }) {
-  const params = useParams();
-  const activeTabId = params.slugs[1] || null;
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editedTabNames, setEditedTabNames] = useState<{
     [key: string]: string;
   }>({});
   const [inputWidth, setInputWidth] = useState<number>(0);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const activeTabId = slugs[1];
 
   useEffect(() => {
     if (editingTabId && inputRef.current) {
@@ -57,7 +58,7 @@ export function ProjectTabs({
   const handleTabNameBlur = () => {
     if (editingTabId) {
       const updatedTabs = project.structure.map((tab) =>
-        tab.id === editingTabId
+        tab.slug === editingTabId
           ? { ...tab, name: editedTabNames[editingTabId] || tab.name }
           : tab
       );
@@ -136,7 +137,7 @@ export function ProjectTabs({
     return (
       <TabsTrigger
         ref={ref}
-        value={tab.id}
+        value={tab.slug}
         className={`px-3 py-1.5 text-sm font-medium transition-all rounded-md data-[state=active]:bg-muted data-[state=active]:text-foreground flex flex-col items-center justify-between`}
         onClick={() => handleTabClick(tab.slug)}
         style={{ opacity }}
@@ -160,7 +161,7 @@ export function ProjectTabs({
         ) : isEditing ? (
           <span>{editedTabNames[tab.slug] || tab.name}</span>
         ) : (
-          <Link href={`/dashboard/${project.id}/${tab.slug}`}>{tab.name}</Link>
+          <Link href={`/${project.id}/${tab.slug}`}>{tab.name}</Link>
         )}
         {isEditing && (
           <Button

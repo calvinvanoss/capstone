@@ -8,15 +8,19 @@ import { Project } from '@/types/project';
 
 export function ProjectSidebar({
   project,
-  activeTabId,
+  slugs,
 }: {
   project: Project;
-  activeTabId: string;
+  slugs: string[];
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTree, setEditedTree] = useState<any>(null);
 
-  const activeTab = project.structure.find((tab) => tab.slug === activeTabId);
+  if (slugs.length < 2) {
+    return null;
+  }
+
+  const activeTab = project.structure.find((tab) => tab.slug === slugs[1]);
 
   const handleTreeChange = (newTree: any) => {
     if (isEditing) {
@@ -85,6 +89,7 @@ export function ProjectSidebar({
       </div>
       <TreeView
         project={project}
+        slugs={slugs}
         tree={isEditing ? editedTree : activeTab?.children || []}
         isEditing={isEditing}
       />

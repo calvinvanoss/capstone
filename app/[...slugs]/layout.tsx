@@ -14,9 +14,7 @@ export default async function ProjectLayout({
   params: { slugs: string[] };
 }) {
   const project = projectSchema.parse(await getProject(params.slugs[0]));
-  const activeTabId = params.slugs[1] || null;
-
-  const showSidebar = activeTabId !== null;
+  const slugs = params.slugs;
 
   /*
   const mockProject = {
@@ -48,17 +46,11 @@ export default async function ProjectLayout({
   return (
     <DndWrapper>
       <div className="flex flex-col min-h-screen">
-        <ProjectHeader project={project} />
+        <ProjectHeader project={project} slugs={slugs} />
         <div className="flex flex-1 overflow-hidden">
-          {showSidebar && (
-            <ProjectSidebar project={project} activeTabId={activeTabId} />
-          )}
-          <main
-            className={`flex-1 overflow-y-auto ${showSidebar ? 'p-8' : 'pt-8 px-8'}`}
-          >
-            {showSidebar && (
-              <Breadcrumbs project={project} path={params.slugs.slice(1)} />
-            )}
+          <ProjectSidebar project={project} slugs={slugs} />
+          <main className={'flex-1 overflow-y-auto p-8'}>
+            <Breadcrumbs project={project} slugs={slugs} />
             {children}
           </main>
         </div>
