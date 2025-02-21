@@ -56,7 +56,6 @@
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18",
-    "sass": "^1.81.1",
     "slate": "^0.102.0",
     "slate-react": "^0.102.0",
     "tailwind-merge": "^2.5.4",

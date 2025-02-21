@@ -11,6 +11,10 @@ export default async function ProjectHomeLayout({
   children: React.ReactNode;
   params: { projectId: string };
 }) {
+  // Next.js will continually call this route with favicon.ico as the projectId for some reason...
+  if (params.projectId === 'favicon.ico') {
+    return null;
+  }
   const project = projectSchema.parse(await getProject(params.projectId));
 
   return (
