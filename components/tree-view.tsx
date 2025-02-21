@@ -8,35 +8,35 @@ import { ChevronRight, ChevronDown, GripVertical, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Project, Doc } from '@/types/project';
+import { Project, DocNode } from '@/types/project';
 import { NewDocButton } from './new-doc-button';
 
 const TreeNode: React.FC<{
   project: Project;
-  item: Doc;
+  node: DocNode;
   index: number;
   depth: number;
   isEditing: boolean;
   activePath: string;
   parentPath: string;
-}> = ({ project, item, index, depth, isEditing, activePath, parentPath }) => {
+}> = ({ project, node, index, depth, isEditing, activePath, parentPath }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isNameEditing, setIsNameEditing] = useState(false);
   const [showAddButton, setShowAddButton] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
 
-  const fullPath = `${parentPath}/${item.id}`;
+  const fullPath = `${parentPath}/${node.slug}`;
   const isActive = activePath === fullPath;
 
   useEffect(() => {
-    if (activePath.includes(fullPath) && 'children' in item) {
+    if (activePath.includes(fullPath) && 'children' in node) {
       setIsExpanded(true);
     }
-  });
+  }, [activePath, fullPath, node]);
 
   const [{ isDragging }, drag] = useDrag({
     type: 'TREE_ITEM',
-    item: { id: item.id, type: 'TREE_ITEM' },
+    item: { id: node.slug, type: 'TREE_ITEM' },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
@@ -45,7 +45,7 @@ const TreeNode: React.FC<{
   const [, drop] = useDrop({
     accept: 'TREE_ITEM',
     drop: (droppedItem: { id: string }, monitor) => {
-      if (droppedItem.id !== item.id) {
+      if (droppedItem.id !== node.slug) {
         // Handle the drop (e.g., update the tree structure)
       }
     },
@@ -53,7 +53,7 @@ const TreeNode: React.FC<{
 
   const toggleExpand = (e: React.MouseEvent) => {
     e.preventDefault();
-    if ('children' in item) {
+    if ('children' in node) {
       setIsExpanded(!isExpanded);
     }
   };
@@ -106,7 +106,7 @@ const TreeNode: React.FC<{
             )}
             {isEditing && isNameEditing ? (
               <Input
-                value={item.name}
+                value={node.name}
                 onChange={handleNameChange}
                 onBlur={handleEditToggle}
                 className="h-5 py-0 px-1 text-sm"
@@ -120,26 +120,26 @@ const TreeNode: React.FC<{
                     className={cn(
                       'flex-grow flex items-center truncate',
                       isActive && !isEditing ? 'font-medium' : '',
-                      'children' in item ? 'font-medium' : '',
+                      'children' in node ? 'font-medium' : '',
                       !isActive && !isEditing && 'hover:text-primary'
                     )}
                   >
-                    <span className="truncate">{item.name}</span>
+                    <span className="truncate">{node.name}</span>
                   </Link>
                 ) : (
                   <span
                     className={cn(
                       'flex-grow flex items-center truncate cursor-pointer',
                       isActive ? 'font-medium' : '',
-                      'children' in item ? 'font-medium' : '',
+                      'children' in node ? 'font-medium' : '',
                       !isActive && 'hover:text-primary'
                     )}
                     onClick={handleEditToggle}
                   >
-                    {item.name}
+                    {node.name}
                   </span>
                 )}
-                {'children' in item && (
+                {'children' in node && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -185,13 +185,13 @@ const TreeNode: React.FC<{
             />
           ))}
       </div>
-      {isExpanded && item.children && (
+      {isExpanded && node.children && (
         <div className="mt-1">
-          {item.children.map((child, childIndex) => (
+          {node.children.map((child, childIndex) => (
             <TreeNode
-              key={child.id}
+              key={child.slug}
               project={project}
-              item={child}
+              node={child}
               index={childIndex}
               depth={depth + 1}
               isEditing={isEditing}
@@ -211,7 +211,7 @@ export const TreeView = ({
   isEditing,
 }: {
   project: Project;
-  tree: Doc[];
+  tree: DocNode[];
   isEditing: boolean;
 }) => {
   const params = useParams();
@@ -230,7 +230,7 @@ export const TreeView = ({
             parentPath={
               Array.isArray(params.slugs)
                 ? params.slugs.slice(0, 2).join('/')
-                : ''
+                : params.slugs
             }
             index={0}
           />
@@ -238,17 +238,19 @@ export const TreeView = ({
       </div>
       {tree.map((item, index) => (
         <TreeNode
-          key={item.id}
+          key={item.slug}
           project={project}
-          item={item}
+          node={item}
           index={index}
           depth={0}
           isEditing={isEditing}
-          activePath={Array.isArray(params.slugs) ? params.slugs.join('/') : ''}
+          activePath={
+            Array.isArray(params.slugs) ? params.slugs.join('/') : params.slugs
+          }
           parentPath={
             Array.isArray(params.slugs)
               ? params.slugs.slice(0, 2).join('/')
-              : ''
+              : params.slugs
           }
         />
       ))}

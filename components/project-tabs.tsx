@@ -43,7 +43,7 @@ export function ProjectTabs({
     if (isEditing) {
       setEditingTabId(tabId);
       const tabName =
-        project.children.find((tab) => tab.id === tabId)?.name || '';
+        project.structure.find((tab) => tab.slug === tabId)?.name || '';
       setEditedTabNames((prev) => ({ ...prev, [tabId]: tabName }));
       setInputWidth(tabName.length * 8); // Set initial width based on tab name length
     }
@@ -56,7 +56,7 @@ export function ProjectTabs({
 
   const handleTabNameBlur = () => {
     if (editingTabId) {
-      const updatedTabs = project.children.map((tab) =>
+      const updatedTabs = project.structure.map((tab) =>
         tab.id === editingTabId
           ? { ...tab, name: editedTabNames[editingTabId] || tab.name }
           : tab
@@ -67,7 +67,7 @@ export function ProjectTabs({
   };
 
   const moveTab = (dragIndex: number, hoverIndex: number) => {
-    const newTabs = [...project.children];
+    const newTabs = [...project.structure];
     const draggedTab = newTabs[dragIndex];
     newTabs.splice(dragIndex, 1);
     newTabs.splice(hoverIndex, 0, draggedTab);
@@ -80,7 +80,7 @@ export function ProjectTabs({
 
   const TabItem = React.forwardRef<
     HTMLDivElement,
-    { tab: (typeof project.children)[0]; index: number }
+    { tab: (typeof project.structure)[0]; index: number }
   >(({ tab, index }, ref) => {
     const [{ handlerId }, drop] = useDrop({
       accept: 'tab',
@@ -123,7 +123,7 @@ export function ProjectTabs({
     const [{ isDragging }, drag] = useDrag({
       type: 'tab',
       item: () => {
-        return { id: tab.id, index };
+        return { id: tab.slug, index };
       },
       collect: (monitor) => ({
         isDragging: monitor.isDragging(),
@@ -138,7 +138,7 @@ export function ProjectTabs({
         ref={ref}
         value={tab.id}
         className={`px-3 py-1.5 text-sm font-medium transition-all rounded-md data-[state=active]:bg-muted data-[state=active]:text-foreground flex flex-col items-center justify-between`}
-        onClick={() => handleTabClick(tab.id)}
+        onClick={() => handleTabClick(tab.slug)}
         style={{ opacity }}
         data-handler-id={handlerId}
       >
@@ -147,10 +147,10 @@ export function ProjectTabs({
             <GripHorizontal size={14} />
           </div>
         )}
-        {isEditing && editingTabId === tab.id ? (
+        {isEditing && editingTabId === tab.slug ? (
           <Input
-            value={editedTabNames[tab.id] || tab.name}
-            onChange={(e) => handleTabNameChange(tab.id, e.target.value)}
+            value={editedTabNames[tab.slug] || tab.name}
+            onChange={(e) => handleTabNameChange(tab.slug, e.target.value)}
             onBlur={handleTabNameBlur}
             className="h-6 py-0 px-1 text-sm bg-transparent border-none focus:ring-0"
             style={{ width: `${inputWidth}px` }}
@@ -158,9 +158,9 @@ export function ProjectTabs({
             ref={inputRef}
           />
         ) : isEditing ? (
-          <span>{editedTabNames[tab.id] || tab.name}</span>
+          <span>{editedTabNames[tab.slug] || tab.name}</span>
         ) : (
-          <Link href={`/dashboard/${project.id}/${tab.id}`}>{tab.name}</Link>
+          <Link href={`/dashboard/${project.id}/${tab.slug}`}>{tab.name}</Link>
         )}
         {isEditing && (
           <Button
@@ -169,7 +169,7 @@ export function ProjectTabs({
             className="p-0 h-4 w-4 mt-1"
             onClick={(e) => {
               e.stopPropagation();
-              handleDeleteTab(tab.id);
+              handleDeleteTab(tab.slug);
             }}
           >
             <X size={14} />
@@ -184,9 +184,9 @@ export function ProjectTabs({
   return (
     <Tabs value={activeTabId} className="w-full">
       <TabsList className="w-full bg-transparent justify-start">
-        {project.children.map((tab, index) => (
+        {project.structure.map((tab, index) => (
           <TabItem
-            key={tab.id}
+            key={tab.slug}
             tab={tab}
             index={index}
             ref={React.createRef()}

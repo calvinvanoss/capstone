@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { Project, Doc } from '@/types/project';
+import { Project, DocNode } from '@/types/project';
 
 export function Breadcrumbs({
   project,
@@ -9,13 +9,13 @@ export function Breadcrumbs({
   project: Project;
   path: string[];
 }) {
-  let currentNode: Doc | undefined;
+  let currentNode: DocNode | undefined;
   let href = `/dashboard/${project.id}`;
   const breadcrumbs = path.map(
     (part, index) => (
       (currentNode = currentNode
-        ? currentNode.children!.find((child) => child.id === part)
-        : project.children.find((tab) => tab.id === part)),
+        ? currentNode.children!.find((child) => child.slug === part)
+        : project.structure.find((tab) => tab.slug === part)),
       (href = `${href}/${part}`),
       {
         name: currentNode?.name,

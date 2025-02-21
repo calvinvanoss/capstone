@@ -1,7 +1,12 @@
 'use server';
 
-import { Project, Doc } from '@/types/project';
+import { Project } from '@/types/project';
 import { cookiesClient } from './amplify-utils';
+
+/* NAMING CONVENTION:
+fullPath: string => full url path including project id
+path: string => path url excluding project id
+*/
 
 export async function getProject(projectId: string) {
   const { data, errors } = await cookiesClient.models.Project.get({
@@ -16,17 +21,17 @@ export async function getProject(projectId: string) {
 }
 
 export async function createProject(name: string, description?: string) {
-  const { data: contentData, errors: contentErrors } =
-    await cookiesClient.models.Content.create({
-      content: '',
-    });
-
-  if (contentData) {
-    const { data, errors } = await cookiesClient.models.Project.create({
+  const { data: projectData, errors: projectErrors } =
+    await cookiesClient.models.Project.create({
       name,
       description,
-      content: contentData.id,
-      children: '[]',
+      structure: '[]',
+    });
+
+  if (projectData) {
+    const { data, errors } = await cookiesClient.models.Document.create({
+      path: projectData.id,
+      content: '',
     });
 
     if (errors) {
@@ -34,8 +39,8 @@ export async function createProject(name: string, description?: string) {
     }
   }
 
-  if (contentErrors) {
-    console.error('error:', contentErrors);
+  if (projectErrors) {
+    console.error('error:', projectErrors);
   }
 }
 
@@ -66,17 +71,19 @@ function slugify(text: string): string {
 }
 
 export async function createTab(project: Project, name: string) {
-  const { data: contentData, errors: contentErrors } =
-    await cookiesClient.models.Content.create({
+  const slug = slugify(name);
+  const { data: documentData, errors: documentErrors } =
+    await cookiesClient.models.Document.create({
+      path: `${project.id}/${slug}`,
       content: '',
     });
 
-  if (contentData) {
+  if (documentData) {
     const { data, errors } = await cookiesClient.models.Project.update({
       id: project.id,
-      children: JSON.stringify([
-        ...project.children,
-        { name, id: slugify(name), content: contentData.id, children: [] },
+      structure: JSON.stringify([
+        ...project.structure,
+        { name, slug, children: [] },
       ]),
     });
 
@@ -85,51 +92,49 @@ export async function createTab(project: Project, name: string) {
     }
   }
 
-  if (contentErrors) {
-    console.error('error:', contentErrors);
+  if (documentErrors) {
+    console.error('error:', documentErrors);
   }
 }
 
 export async function createDocument(
   project: Project,
   name: string,
-  parentPath: string,
+  fullPath: string,
   index: number,
   type: 'folder' | 'file'
 ) {
-  const { data: contentData, errors: contentErrors } =
-    await cookiesClient.models.Content.create({
+  const slug = slugify(name);
+  const { data: documentData, errors: documentErrors } =
+    await cookiesClient.models.Document.create({
+      path: `${fullPath}/${slug}`,
       content: '',
     });
 
-  if (contentData) {
-    const parentPathArr = parentPath.split('/');
+  if (documentData) {
+    const fullPathArr = fullPath.split('/');
+
+    for (const doc of project.structure) {
+      let currentNode = doc;
+      if (doc.slug === fullPathArr[1]) {
+        for (const path of fullPathArr.slice(2)) {
+          currentNode = currentNode.children!.find(
+            (child) => child.slug === path
+          )!;
+        }
+        if (currentNode.children) {
+          currentNode.children.splice(index, 0, {
+            name,
+            slug,
+            children: type === 'folder' ? [] : undefined,
+          });
+        }
+      }
+    }
 
     const { data, errors } = await cookiesClient.models.Project.update({
       id: project.id,
-      children: JSON.stringify(
-        project.children.map((doc) => {
-          if (doc.id === parentPathArr[1]) {
-            let currentNode: Doc | undefined = doc;
-            for (const path of parentPathArr.slice(2)) {
-              currentNode = currentNode!.children!.find(
-                (child) => child.id === path
-              );
-            }
-            if (!currentNode) {
-              throw new Error(`Path not found: ${parentPath}`);
-            }
-            const children = currentNode.children || [];
-            children.splice(index, 0, {
-              id: slugify(name),
-              name,
-              content: contentData.id,
-              children: type === 'folder' ? [] : undefined,
-            });
-          }
-          return doc;
-        })
-      ),
+      structure: JSON.stringify(project.structure),
     });
 
     if (errors) {
@@ -137,38 +142,30 @@ export async function createDocument(
     }
   }
 
-  if (contentErrors) {
-    console.error('error:', contentErrors);
+  if (documentErrors) {
+    console.error('error:', documentErrors);
   }
 }
 
-export async function getContent(project: Project, fullPath: string[]) {
-  let currentNode: Doc | Project | undefined = project;
-  if (fullPath.length > 1) {
-    for (const path of fullPath.slice(1)) {
-      currentNode = currentNode?.children!.find((child) => child.id === path);
-    }
+export async function getContent(fullPath: string) {
+  const { data, errors } = await cookiesClient.models.Document.get({
+    path: fullPath,
+  });
+
+  if (errors) {
+    console.error('error:', errors);
   }
 
-  if (currentNode && currentNode.content) {
-    const { data, errors } = await cookiesClient.models.Content.get({
-      id: currentNode.content,
-    });
-
-    if (errors) {
-      console.error('error:', errors);
-    }
-
-    if (data) {
-      return data;
-    }
+  if (data) {
+    return data;
   }
+
   return null;
 }
 
-export async function updateContent(id: string, content: string) {
-  const { data, errors } = await cookiesClient.models.Content.update({
-    id,
+export async function updateContent(fullPath: string, content: string) {
+  const { data, errors } = await cookiesClient.models.Document.update({
+    path: fullPath,
     content,
   });
 
