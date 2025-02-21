@@ -18,7 +18,7 @@ import { useRouter } from 'next/navigation';
 
 export function NewDocButton({
   project,
-  parentPath,
+  parentPath: parentPath,
   index,
 }: {
   project: Project;

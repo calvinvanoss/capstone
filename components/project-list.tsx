@@ -52,6 +52,7 @@ export async function ProjectList() {
             >
               <Link
                 href={`/${project.id}`}
+                prefetch={false}
                 className="flex items-center justify-center"
               >
                 Open Project

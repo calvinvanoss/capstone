@@ -9,6 +9,7 @@ import { GripHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Project } from '@/types/project';
 import NewTabButton from './new-tab-button';
+import { useParams } from 'next/navigation';
 
 type DragItem = {
   index: number;
@@ -18,13 +19,12 @@ type DragItem = {
 
 export function ProjectTabs({
   project,
-  slugs,
   isEditing,
 }: {
   project: Project;
-  slugs: string[];
   isEditing: boolean;
 }) {
+  const params = useParams();
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editedTabNames, setEditedTabNames] = useState<{
     [key: string]: string;
@@ -32,7 +32,7 @@ export function ProjectTabs({
   const [inputWidth, setInputWidth] = useState<number>(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const activeTabId = slugs[1];
+  const activeTabId = params.slugs ? params.slugs[0] : '';
 
   useEffect(() => {
     if (editingTabId && inputRef.current) {
@@ -161,7 +161,9 @@ export function ProjectTabs({
         ) : isEditing ? (
           <span>{editedTabNames[tab.slug] || tab.name}</span>
         ) : (
-          <Link href={`/${project.id}/${tab.slug}`}>{tab.name}</Link>
+          <Link href={`/${project.id}/${tab.slug}`} prefetch={false}>
+            {tab.name}
+          </Link>
         )}
         {isEditing && (
           <Button

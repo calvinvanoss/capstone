@@ -16,11 +16,7 @@ export function ProjectSidebar({
   const [isEditing, setIsEditing] = useState(false);
   const [editedTree, setEditedTree] = useState<any>(null);
 
-  if (slugs.length < 2) {
-    return null;
-  }
-
-  const activeTab = project.structure.find((tab) => tab.slug === slugs[1]);
+  const activeTab = project.structure.find((tab) => tab.slug === slugs[0]);
 
   const handleTreeChange = (newTree: any) => {
     if (isEditing) {

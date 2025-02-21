@@ -24,14 +24,14 @@ const TreeNode: React.FC<{
   const [showAddButton, setShowAddButton] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
 
-  const fullPath = `${parentPath}/${node.slug}`;
-  const isActive = activePath === fullPath;
+  const path = `${parentPath}/${node.slug}`;
+  const isActive = activePath === path;
 
   useEffect(() => {
-    if (activePath.includes(fullPath) && 'children' in node) {
+    if (activePath.includes(path) && 'children' in node) {
       setIsExpanded(true);
     }
-  }, [activePath, fullPath, node]);
+  }, [activePath, path, node]);
 
   const [{ isDragging }, drag] = useDrag({
     type: 'TREE_ITEM',
@@ -115,7 +115,8 @@ const TreeNode: React.FC<{
               <>
                 {!isEditing ? (
                   <Link
-                    href={`/${fullPath}`}
+                    href={`/${project.id}/${path}`}
+                    prefetch={false}
                     className={cn(
                       'flex-grow flex items-center truncate',
                       isActive && !isEditing ? 'font-medium' : '',
@@ -175,7 +176,7 @@ const TreeNode: React.FC<{
         )}
         {showAddButton &&
           (isExpanded ? (
-            <NewDocButton project={project} parentPath={fullPath} index={0} />
+            <NewDocButton project={project} parentPath={path} index={0} />
           ) : (
             <NewDocButton
               project={project}
@@ -195,7 +196,7 @@ const TreeNode: React.FC<{
               depth={depth + 1}
               isEditing={isEditing}
               activePath={activePath}
-              parentPath={fullPath}
+              parentPath={path}
             />
           ))}
         </div>
@@ -225,11 +226,7 @@ export const TreeView = ({
         onMouseLeave={() => setIsHoveringTop(false)}
       >
         {(isHoveringTop || tree.length === 0) && (
-          <NewDocButton
-            project={project}
-            parentPath={slugs.slice(0, 2).join('/')}
-            index={0}
-          />
+          <NewDocButton project={project} parentPath={slugs[0]} index={0} />
         )}
       </div>
       {tree.map((item, index) => (
@@ -241,7 +238,7 @@ export const TreeView = ({
           depth={0}
           isEditing={isEditing}
           activePath={slugs.join('/')}
-          parentPath={slugs.slice(0, 2).join('/')}
+          parentPath={slugs[0]}
         />
       ))}
     </div>

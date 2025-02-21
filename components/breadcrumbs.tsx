@@ -9,15 +9,11 @@ export function Breadcrumbs({
   project: Project;
   slugs: string[];
 }) {
-  if (slugs.length === 1) {
-    return null;
-  }
-
   // TODO: cleanup this type check for graceful error handling
-  let currentNode = project.structure.find((tab) => tab.slug === slugs[1])!;
+  let currentNode = project.structure.find((tab) => tab.slug === slugs[0])!;
   let href = `/${project.id}/${currentNode.slug}`;
-  const breadcrumbs = [{ name: project.name, href }];
-  for (const slug of slugs.slice(2)) {
+  const breadcrumbs = [{ name: currentNode.name, href }];
+  for (const slug of slugs.slice(1)) {
     currentNode = currentNode.children!.find((child) => child.slug === slug)!;
     href += `/${currentNode.slug}`;
     breadcrumbs.push({

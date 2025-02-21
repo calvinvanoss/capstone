@@ -6,6 +6,8 @@ import { cookiesClient } from './amplify-utils';
 /* NAMING CONVENTION:
 fullPath: string => full url path including project id
 path: string => path url excluding project id
+projectId: string => project id
+slugs: string[] => array of slugs (excludes project id)
 */
 
 export async function getProject(projectId: string) {
@@ -98,24 +100,25 @@ export async function createTab(project: Project, name: string) {
 export async function createDocument(
   project: Project,
   name: string,
-  fullPath: string,
+  path: string,
   index: number,
   type: 'folder' | 'file'
 ) {
   const slug = slugify(name);
   const { data: documentData, errors: documentErrors } =
     await cookiesClient.models.Document.create({
-      path: `${fullPath}/${slug}`,
+      path: `${project.id}/${path}/${slug}`,
       content: '',
     });
 
   if (documentData) {
-    const fullPathArr = fullPath.split('/');
+    const slugs = path.split('/');
 
+    // TODO: refactor project.structure -> project.children, combine with createTab
     for (const doc of project.structure) {
       let currentNode = doc;
-      if (doc.slug === fullPathArr[1]) {
-        for (const path of fullPathArr.slice(2)) {
+      if (doc.slug === slugs[0]) {
+        for (const path of slugs.slice(1)) {
           currentNode = currentNode.children!.find(
             (child) => child.slug === path
           )!;
@@ -161,9 +164,13 @@ export async function getContent(fullPath: string) {
   return null;
 }
 
-export async function updateContent(fullPath: string, content: string) {
+export async function updateContent(
+  projectId: string,
+  path: string,
+  content: string
+) {
   const { data, errors } = await cookiesClient.models.Document.update({
-    path: fullPath,
+    path: `${projectId}/${path}`,
     content,
   });
 

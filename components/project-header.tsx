@@ -15,18 +15,10 @@ import { EditButton } from './edit-button';
 import { Input } from '@/components/ui/input';
 import { Project } from '@/types/project';
 
-export function ProjectHeader({
-  project,
-  slugs,
-}: {
-  project: Project;
-  slugs: string[];
-}) {
+export function ProjectHeader({ project }: { project: Project }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(project?.name || '');
   const [isTitleEditing, setIsTitleEditing] = useState(false);
-
-  if (!project) return null;
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -100,7 +92,7 @@ export function ProjectHeader({
         )}
       </div>
       <div className="flex-grow mx-4 max-w-2xl">
-        <ProjectTabs project={project} slugs={slugs} isEditing={isEditing} />
+        <ProjectTabs project={project} isEditing={isEditing} />
       </div>
       <div className="flex items-center space-x-4">
         <ThemeToggle />

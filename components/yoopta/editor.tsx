@@ -82,7 +82,15 @@ const TOOLS = {
   },
 };
 
-export default function Editor({ document }: { document: Document }) {
+export default function Editor({
+  projectId,
+  slugs,
+  document,
+}: {
+  projectId: string;
+  slugs: string[];
+  document: Document;
+}) {
   const editor = useMemo(() => createYooptaEditor(), []);
   const [value, setValue] = useState<YooptaContentValue>(
     document && document.content ? JSON.parse(document.content) : undefined
@@ -108,7 +116,7 @@ export default function Editor({ document }: { document: Document }) {
     setIsEditing(false);
     if (value != undefined) {
       if (document) {
-        updateContent(document.path, JSON.stringify(value));
+        updateContent(projectId, slugs.join('/'), JSON.stringify(value));
       }
     }
   };
