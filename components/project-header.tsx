@@ -13,16 +13,13 @@ import { ThemeToggle } from './theme-toggle';
 import Link from 'next/link';
 import { EditButton } from './edit-button';
 import { Input } from '@/components/ui/input';
-import { Project } from '@/types/project';
-import { useProjectStore } from '@/lib/zustand/store';
+import { useProject } from '@/lib/zustand/store';
 
-export function ProjectHeader({ project }: { project: Project }) {
-  const { setProject } = useProjectStore();
+export function ProjectHeader() {
+  const { project } = useProject();
   const [isEditing, setIsEditing] = useState(false);
-  const [editedName, setEditedName] = useState(project?.name || '');
+  const [editedName, setEditedName] = useState(project.name || '');
   const [isTitleEditing, setIsTitleEditing] = useState(false);
-
-  setProject(project);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -96,7 +93,7 @@ export function ProjectHeader({ project }: { project: Project }) {
         )}
       </div>
       <div className="flex-grow mx-4 max-w-2xl">
-        <ProjectTabs project={project} isEditing={isEditing} />
+        <ProjectTabs isEditing={isEditing} />
       </div>
       <div className="flex items-center space-x-4">
         <ThemeToggle />

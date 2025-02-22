@@ -2,12 +2,11 @@
 
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { useProjectStore } from '@/lib/zustand/store';
+import { useProject } from '@/lib/zustand/store';
 import { Project, DocNode } from '@/types/project';
 
 export function Breadcrumbs({ slugs }: { slugs: string[] }) {
-  const { project } = useProjectStore();
-  if (!project) return null;
+  const { project } = useProject();
 
   let currentNode: Project | DocNode | undefined = project;
   let href = `/${project.id}`;

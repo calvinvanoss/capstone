@@ -7,9 +7,9 @@ import { Input } from '@/components/ui/input';
 import { useDrag, useDrop, XYCoord } from 'react-dnd';
 import { GripHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Project } from '@/types/project';
 import NewTabButton from './new-tab-button';
 import { useParams } from 'next/navigation';
+import { useProject } from '@/lib/zustand/store';
 
 type DragItem = {
   index: number;
@@ -17,13 +17,8 @@ type DragItem = {
   type: string;
 };
 
-export function ProjectTabs({
-  project,
-  isEditing,
-}: {
-  project: Project;
-  isEditing: boolean;
-}) {
+export function ProjectTabs({ isEditing }: { isEditing: boolean }) {
+  const { project } = useProject();
   const params = useParams();
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editedTabNames, setEditedTabNames] = useState<{
@@ -195,7 +190,7 @@ export function ProjectTabs({
             ref={React.createRef()}
           />
         ))}
-        <NewTabButton project={project} />
+        <NewTabButton />
       </TabsList>
     </Tabs>
   );

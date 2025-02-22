@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { DocNode } from '@/types/project';
 import { NewDocButton } from './new-doc-button';
-import { useProjectStore } from '@/lib/zustand/store';
+import { useProject } from '@/lib/zustand/store';
 
 const TreeNode: React.FC<{
   node: DocNode;
@@ -19,7 +19,7 @@ const TreeNode: React.FC<{
   activePath: string;
   parentPath: string;
 }> = ({ node, index, depth, isEditing, activePath, parentPath }) => {
-  const { project } = useProjectStore();
+  const { project } = useProject();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isNameEditing, setIsNameEditing] = useState(false);
   const [showAddButton, setShowAddButton] = useState(false);
@@ -50,8 +50,6 @@ const TreeNode: React.FC<{
       }
     },
   });
-
-  if (!project) return null;
 
   const toggleExpand = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -212,9 +210,8 @@ export const TreeView = ({
   tree: DocNode[];
   isEditing: boolean;
 }) => {
-  const { project } = useProjectStore();
+  const { project } = useProject();
   const [isHoveringTop, setIsHoveringTop] = useState(false);
-  if (!project) return null;
 
   return (
     <div className="relative">

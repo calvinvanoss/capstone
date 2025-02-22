@@ -4,13 +4,12 @@ import { useState } from 'react';
 import { TreeView } from './tree-view';
 import { Button } from '@/components/ui/button';
 import { Pencil, Check, X } from 'lucide-react';
-import { useProjectStore } from '@/lib/zustand/store';
+import { useProject } from '@/lib/zustand/store';
 
 export function ProjectSidebar({ slugs }: { slugs: string[] }) {
-  const { project } = useProjectStore();
+  const { project } = useProject();
   const [isEditing, setIsEditing] = useState(false);
   const [editedTree, setEditedTree] = useState<any>(null);
-  if (!project) return null;
 
   const activeTab = project.children.find((tab) => tab.slug === slugs[0]);
 

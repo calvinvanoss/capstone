@@ -1,6 +1,5 @@
 'use client';
 
-import { createDocument } from '@/lib/server-actions';
 import {
   Dialog,
   DialogTrigger,
@@ -13,8 +12,7 @@ import { Button } from './ui/button';
 import { DialogHeader, DialogFooter } from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { useRouter } from 'next/navigation';
-import { useProjectStore } from '@/lib/zustand/store';
+import { useProject } from '@/lib/zustand/store';
 
 export function NewDocButton({
   parentPath: parentPath,
@@ -23,20 +21,16 @@ export function NewDocButton({
   parentPath: string;
   index: number;
 }) {
-  const { project } = useProjectStore();
-  const router = useRouter();
+  const { createDocument } = useProject();
   const [isOpen, setIsOpen] = useState(false);
   const [newDocName, setNewDocName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  if (!project) return null;
 
   const handleCreateDocument = async (type: 'folder' | 'file') => {
     if (newDocName.trim()) {
       setIsLoading(true);
       try {
-        await createDocument(project, newDocName, parentPath, index, type);
-        router.refresh();
-        await new Promise((resolve) => setTimeout(resolve, 500)); // wait for new tab to show on frontend
+        createDocument(newDocName, parentPath, index, type);
         setIsOpen(false);
         setNewDocName('');
         setIsLoading(false);

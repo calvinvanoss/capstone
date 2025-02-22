@@ -3,6 +3,7 @@ import React from 'react';
 import DndWrapper from '@/components/dnd-wrapper';
 import { projectSchema } from '@/types/project';
 import { getProject } from '@/lib/server-actions';
+import { ProjectProvider } from '@/components/project-provider';
 
 export default async function ProjectHomeLayout({
   children,
@@ -15,14 +16,16 @@ export default async function ProjectHomeLayout({
   if (params.projectId === 'favicon.ico') {
     return null;
   }
-  const project = projectSchema.parse(await getProject(params.projectId));
+  const project = await getProject(params.projectId);
 
   return (
     <DndWrapper>
-      <div className="flex flex-col min-h-screen">
-        <ProjectHeader project={project} />
-        {children}
-      </div>
+      <ProjectProvider project={projectSchema.parse(project)}>
+        <div className="flex flex-col min-h-screen">
+          <ProjectHeader />
+          {children}
+        </div>
+      </ProjectProvider>
     </DndWrapper>
   );
 }

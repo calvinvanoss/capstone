@@ -1,6 +1,6 @@
 'use server';
 
-import { DocNode, Project } from '@/types/project';
+import { Project } from '@/types/project';
 import { cookiesClient } from './amplify-utils';
 
 /* NAMING CONVENTION:
@@ -59,69 +59,27 @@ export async function deleteProject(projectId: string) {
   return data;
 }
 
-// readable name to slug path
-function slugify(text: string): string {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-') // Replace spaces with -
-    .replace(/[^\w\-.~!*'()]+/g, '') // Remove all non url friendly chars
-    .replace(/\-\-+/g, '-'); // Replace multiple - with single -
+export async function postDocument(path: string) {
+  const { data, errors } = await cookiesClient.models.Document.create({
+    path,
+    content: '',
+  });
+
+  if (errors) {
+    console.error('error:', errors);
+  }
 }
 
-export async function createDocument(
-  project: Project,
-  name: string,
-  path: string,
-  index: number,
-  type: 'folder' | 'file'
-) {
-  const slugs = path ? path.split('/') : [];
-  let currentNode: Project | DocNode | undefined = project;
-  for (const slug of slugs) {
-    currentNode = currentNode.children?.find((child) => child.slug === slug);
-    if (!currentNode) {
-      throw new Error('Invalid path');
-    }
-  }
+export async function putProject(project: Project) {
+  const { data, errors } = await cookiesClient.models.Project.update({
+    id: project.id,
+    description: project.description,
+    name: project.name,
+    children: JSON.stringify(project.children),
+  });
 
-  const slug = slugify(name);
-  const { data: documentData, errors: documentErrors } =
-    await cookiesClient.models.Document.create({
-      path: path ? `${project.id}/${path}/${slug}` : `${project.id}/${slug}`,
-      content: '',
-    });
-
-  if (documentData) {
-    if (currentNode.children) {
-      currentNode.children.splice(index, 0, {
-        name,
-        slug,
-        children: type === 'folder' ? [] : undefined,
-      });
-    } else {
-      currentNode.children = [
-        {
-          name,
-          slug,
-          children: type === 'folder' ? [] : undefined,
-        },
-      ];
-    }
-
-    const { data, errors } = await cookiesClient.models.Project.update({
-      id: project.id,
-      children: JSON.stringify(project.children),
-    });
-
-    if (errors) {
-      console.error('error:', errors);
-    }
-  }
-
-  if (documentErrors) {
-    console.error('error:', documentErrors);
+  if (errors) {
+    console.error('error:', errors);
   }
 }
 
