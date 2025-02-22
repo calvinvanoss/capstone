@@ -7,18 +7,19 @@ import { Input } from '@/components/ui/input';
 import { ChevronRight, ChevronDown, GripVertical, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { Project, DocNode } from '@/types/project';
+import { DocNode } from '@/types/project';
 import { NewDocButton } from './new-doc-button';
+import { useProjectStore } from '@/lib/zustand/store';
 
 const TreeNode: React.FC<{
-  project: Project;
   node: DocNode;
   index: number;
   depth: number;
   isEditing: boolean;
   activePath: string;
   parentPath: string;
-}> = ({ project, node, index, depth, isEditing, activePath, parentPath }) => {
+}> = ({ node, index, depth, isEditing, activePath, parentPath }) => {
+  const { project } = useProjectStore();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isNameEditing, setIsNameEditing] = useState(false);
   const [showAddButton, setShowAddButton] = useState(false);
@@ -49,6 +50,8 @@ const TreeNode: React.FC<{
       }
     },
   });
+
+  if (!project) return null;
 
   const toggleExpand = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -176,13 +179,9 @@ const TreeNode: React.FC<{
         )}
         {showAddButton &&
           (isExpanded ? (
-            <NewDocButton project={project} parentPath={path} index={0} />
+            <NewDocButton parentPath={path} index={0} />
           ) : (
-            <NewDocButton
-              project={project}
-              parentPath={parentPath}
-              index={index + 1}
-            />
+            <NewDocButton parentPath={parentPath} index={index + 1} />
           ))}
       </div>
       {isExpanded && node.children && (
@@ -190,7 +189,6 @@ const TreeNode: React.FC<{
           {node.children.map((child, childIndex) => (
             <TreeNode
               key={child.slug}
-              project={project}
               node={child}
               index={childIndex}
               depth={depth + 1}
@@ -206,17 +204,17 @@ const TreeNode: React.FC<{
 };
 
 export const TreeView = ({
-  project,
   slugs,
   tree,
   isEditing,
 }: {
-  project: Project;
   slugs: string[];
   tree: DocNode[];
   isEditing: boolean;
 }) => {
+  const { project } = useProjectStore();
   const [isHoveringTop, setIsHoveringTop] = useState(false);
+  if (!project) return null;
 
   return (
     <div className="relative">
@@ -226,13 +224,12 @@ export const TreeView = ({
         onMouseLeave={() => setIsHoveringTop(false)}
       >
         {(isHoveringTop || tree.length === 0) && (
-          <NewDocButton project={project} parentPath={slugs[0]} index={0} />
+          <NewDocButton parentPath={slugs[0]} index={0} />
         )}
       </div>
       {tree.map((item, index) => (
         <TreeNode
           key={item.slug}
-          project={project}
           node={item}
           index={index}
           depth={0}

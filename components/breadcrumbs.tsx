@@ -1,14 +1,13 @@
+'use client';
+
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { Project } from '@/types/project';
+import { useProjectStore } from '@/lib/zustand/store';
 
-export function Breadcrumbs({
-  project,
-  slugs,
-}: {
-  project: Project;
-  slugs: string[];
-}) {
+export function Breadcrumbs({ slugs }: { slugs: string[] }) {
+  const { project } = useProjectStore();
+  if (!project) return null;
+
   // TODO: cleanup this type check for graceful error handling
   let currentNode = project.structure.find((tab) => tab.slug === slugs[0])!;
   let href = `/${project.id}/${currentNode.slug}`;

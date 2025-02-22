@@ -35,6 +35,7 @@ import Divider from '@yoopta/divider';
 import { EditButton } from '../edit-button';
 import { Document } from '@/types/project';
 import { updateContent } from '@/lib/server-actions';
+import { useProjectStore } from '@/lib/zustand/store';
 
 const MARKS = [Bold, Italic, CodeMark, Underline, Strike, Highlight];
 
@@ -83,14 +84,13 @@ const TOOLS = {
 };
 
 export default function Editor({
-  projectId,
   slugs,
   document,
 }: {
-  projectId: string;
   slugs: string[];
   document: Document;
 }) {
+  const { project } = useProjectStore();
   const editor = useMemo(() => createYooptaEditor(), []);
   const [value, setValue] = useState<YooptaContentValue>(
     document && document.content ? JSON.parse(document.content) : undefined
@@ -99,6 +99,7 @@ export default function Editor({
     document && document.content ? JSON.parse(document.content) : undefined
   );
   const [isEditing, setIsEditing] = useState(false);
+  if (!project) return null;
 
   const onChange = (
     value: YooptaContentValue,
@@ -116,7 +117,7 @@ export default function Editor({
     setIsEditing(false);
     if (value != undefined) {
       if (document) {
-        updateContent(projectId, slugs.join('/'), JSON.stringify(value));
+        updateContent(project.id, slugs.join('/'), JSON.stringify(value));
       }
     }
   };

@@ -12,23 +12,23 @@ import { useState } from 'react';
 import { Button } from './ui/button';
 import { DialogHeader, DialogFooter } from './ui/dialog';
 import { Input } from './ui/input';
-import { Project } from '@/types/project';
 import { Label } from './ui/label';
 import { useRouter } from 'next/navigation';
+import { useProjectStore } from '@/lib/zustand/store';
 
 export function NewDocButton({
-  project,
   parentPath: parentPath,
   index,
 }: {
-  project: Project;
   parentPath: string;
   index: number;
 }) {
+  const { project } = useProjectStore();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [newDocName, setNewDocName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  if (!project) return null;
 
   const handleCreateDocument = async (type: 'folder' | 'file') => {
     if (newDocName.trim()) {

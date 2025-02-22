@@ -11,7 +11,7 @@ export default async function ProjectHomePage({
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className={'flex-1 overflow-y-auto p-8'}>
-        <Editor projectId={params.projectId} slugs={[]} document={document} />
+        <Editor slugs={[]} document={document} />
       </div>
     </div>
   );

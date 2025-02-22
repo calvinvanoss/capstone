@@ -14,11 +14,15 @@ import Link from 'next/link';
 import { EditButton } from './edit-button';
 import { Input } from '@/components/ui/input';
 import { Project } from '@/types/project';
+import { useProjectStore } from '@/lib/zustand/store';
 
 export function ProjectHeader({ project }: { project: Project }) {
+  const { setProject } = useProjectStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(project?.name || '');
   const [isTitleEditing, setIsTitleEditing] = useState(false);
+
+  setProject(project);
 
   const handleEdit = () => {
     setIsEditing(true);
