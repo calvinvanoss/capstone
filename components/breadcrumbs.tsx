@@ -3,23 +3,25 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { useProjectStore } from '@/lib/zustand/store';
+import { Project, DocNode } from '@/types/project';
 
 export function Breadcrumbs({ slugs }: { slugs: string[] }) {
   const { project } = useProjectStore();
   if (!project) return null;
 
-  // TODO: cleanup this type check for graceful error handling
-  let currentNode = project.structure.find((tab) => tab.slug === slugs[0])!;
-  let href = `/${project.id}/${currentNode.slug}`;
-  const breadcrumbs = [{ name: currentNode.name, href }];
-  for (const slug of slugs.slice(1)) {
-    currentNode = currentNode.children!.find((child) => child.slug === slug)!;
+  let currentNode: Project | DocNode | undefined = project;
+  let href = `/${project.id}`;
+  const breadcrumbs = slugs.map((slug) => {
+    currentNode = currentNode?.children?.find((child) => child.slug === slug);
+    if (!currentNode) {
+      throw new Error('Invalid path');
+    }
     href += `/${currentNode.slug}`;
-    breadcrumbs.push({
+    return {
       name: currentNode.name,
       href,
-    });
-  }
+    };
+  });
 
   return (
     <nav className="flex mb-6" aria-label="Breadcrumb">

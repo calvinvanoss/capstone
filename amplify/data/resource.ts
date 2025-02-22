@@ -12,7 +12,7 @@ const schema = a.schema({
       id: a.id().required(),
       name: a.string().required(),
       description: a.string(),
-      structure: a.string().required(), // JSON string
+      children: a.string().required(), // JSON string
     })
     .identifier(['id'])
     .authorization((allow) => [allow.authenticated()]),

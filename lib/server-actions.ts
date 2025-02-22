@@ -1,6 +1,6 @@
 'use server';
 
-import { Project } from '@/types/project';
+import { DocNode, Project } from '@/types/project';
 import { cookiesClient } from './amplify-utils';
 
 /* NAMING CONVENTION:
@@ -27,7 +27,7 @@ export async function createProject(name: string, description?: string) {
     await cookiesClient.models.Project.create({
       name,
       description,
-      structure: '[]',
+      children: '[]',
     });
 
   if (projectData) {
@@ -70,33 +70,6 @@ function slugify(text: string): string {
     .replace(/\-\-+/g, '-'); // Replace multiple - with single -
 }
 
-export async function createTab(project: Project, name: string) {
-  const slug = slugify(name);
-  const { data: documentData, errors: documentErrors } =
-    await cookiesClient.models.Document.create({
-      path: `${project.id}/${slug}`,
-      content: '',
-    });
-
-  if (documentData) {
-    const { data, errors } = await cookiesClient.models.Project.update({
-      id: project.id,
-      structure: JSON.stringify([
-        ...project.structure,
-        { name, slug, children: [] },
-      ]),
-    });
-
-    if (errors) {
-      console.error('error:', errors);
-    }
-  }
-
-  if (documentErrors) {
-    console.error('error:', documentErrors);
-  }
-}
-
 export async function createDocument(
   project: Project,
   name: string,
@@ -104,38 +77,42 @@ export async function createDocument(
   index: number,
   type: 'folder' | 'file'
 ) {
+  const slugs = path ? path.split('/') : [];
+  let currentNode: Project | DocNode | undefined = project;
+  for (const slug of slugs) {
+    currentNode = currentNode.children?.find((child) => child.slug === slug);
+    if (!currentNode) {
+      throw new Error('Invalid path');
+    }
+  }
+
   const slug = slugify(name);
   const { data: documentData, errors: documentErrors } =
     await cookiesClient.models.Document.create({
-      path: `${project.id}/${path}/${slug}`,
+      path: path ? `${project.id}/${path}/${slug}` : `${project.id}/${slug}`,
       content: '',
     });
 
   if (documentData) {
-    const slugs = path.split('/');
-
-    // TODO: refactor project.structure -> project.children, combine with createTab
-    for (const doc of project.structure) {
-      let currentNode = doc;
-      if (doc.slug === slugs[0]) {
-        for (const path of slugs.slice(1)) {
-          currentNode = currentNode.children!.find(
-            (child) => child.slug === path
-          )!;
-        }
-        if (currentNode.children) {
-          currentNode.children.splice(index, 0, {
-            name,
-            slug,
-            children: type === 'folder' ? [] : undefined,
-          });
-        }
-      }
+    if (currentNode.children) {
+      currentNode.children.splice(index, 0, {
+        name,
+        slug,
+        children: type === 'folder' ? [] : undefined,
+      });
+    } else {
+      currentNode.children = [
+        {
+          name,
+          slug,
+          children: type === 'folder' ? [] : undefined,
+        },
+      ];
     }
 
     const { data, errors } = await cookiesClient.models.Project.update({
       id: project.id,
-      structure: JSON.stringify(project.structure),
+      children: JSON.stringify(project.children),
     });
 
     if (errors) {

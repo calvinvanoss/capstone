@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
-import { createTab } from '@/lib/server-actions';
+import { createDocument } from '@/lib/server-actions';
 import { Project } from '@/types/project';
 import { useRouter } from 'next/navigation';
 
@@ -31,7 +31,13 @@ export function NewTabButton({ project }: { project: Project }) {
     if (newTabName.trim()) {
       setIsLoading(true);
       try {
-        await createTab(project, newTabName);
+        await createDocument(
+          project,
+          newTabName,
+          '',
+          project.children.length,
+          'folder'
+        );
         router.refresh();
         await new Promise((resolve) => setTimeout(resolve, 500)); // wait for new tab to show on frontend
         setIsOpen(false);

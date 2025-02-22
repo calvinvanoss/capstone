@@ -12,13 +12,13 @@ export function ProjectSidebar({ slugs }: { slugs: string[] }) {
   const [editedTree, setEditedTree] = useState<any>(null);
   if (!project) return null;
 
-  const activeTab = project.structure.find((tab) => tab.slug === slugs[0]);
+  const activeTab = project.children.find((tab) => tab.slug === slugs[0]);
 
   const handleTreeChange = (newTree: any) => {
     if (isEditing) {
       setEditedTree(newTree);
     } else if (project && activeTab) {
-      const updatedTabs = project.structure.map((tab) =>
+      const updatedTabs = project.children.map((tab) =>
         tab.slug === activeTab.slug ? { ...tab, sidebar: newTree } : tab
       );
       console.log('update tabs api call');
@@ -32,7 +32,7 @@ export function ProjectSidebar({ slugs }: { slugs: string[] }) {
 
   const confirmEditing = () => {
     if (editedTree && project && activeTab) {
-      const updatedTabs = project.structure.map((tab) =>
+      const updatedTabs = project.children.map((tab) =>
         tab.slug === activeTab.slug ? { ...tab, sidebar: editedTree } : tab
       );
       console.log('update tabs api call');

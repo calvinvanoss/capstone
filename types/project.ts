@@ -21,7 +21,7 @@ const docNodesSchema = z.array(docNodeSchema);
 
 export const projectSchema = z.object({
     name: z.string(),
-    structure: z.string().transform((str) => {
+    children: z.string().transform((str) => {
       try {
         return docNodesSchema.parse(JSON.parse(str)); // Parse the stringified JSON and validate it
       } catch (error) {

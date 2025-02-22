@@ -44,7 +44,7 @@ export function ProjectTabs({
     if (isEditing) {
       setEditingTabId(tabId);
       const tabName =
-        project.structure.find((tab) => tab.slug === tabId)?.name || '';
+        project.children.find((tab) => tab.slug === tabId)?.name || '';
       setEditedTabNames((prev) => ({ ...prev, [tabId]: tabName }));
       setInputWidth(tabName.length * 8); // Set initial width based on tab name length
     }
@@ -57,7 +57,7 @@ export function ProjectTabs({
 
   const handleTabNameBlur = () => {
     if (editingTabId) {
-      const updatedTabs = project.structure.map((tab) =>
+      const updatedTabs = project.children.map((tab) =>
         tab.slug === editingTabId
           ? { ...tab, name: editedTabNames[editingTabId] || tab.name }
           : tab
@@ -68,7 +68,7 @@ export function ProjectTabs({
   };
 
   const moveTab = (dragIndex: number, hoverIndex: number) => {
-    const newTabs = [...project.structure];
+    const newTabs = [...project.children];
     const draggedTab = newTabs[dragIndex];
     newTabs.splice(dragIndex, 1);
     newTabs.splice(hoverIndex, 0, draggedTab);
@@ -81,7 +81,7 @@ export function ProjectTabs({
 
   const TabItem = React.forwardRef<
     HTMLDivElement,
-    { tab: (typeof project.structure)[0]; index: number }
+    { tab: (typeof project.children)[0]; index: number }
   >(({ tab, index }, ref) => {
     const [{ handlerId }, drop] = useDrop({
       accept: 'tab',
@@ -187,7 +187,7 @@ export function ProjectTabs({
   return (
     <Tabs value={activeTabId} className="w-full">
       <TabsList className="w-full bg-transparent justify-start">
-        {project.structure.map((tab, index) => (
+        {project.children.map((tab, index) => (
           <TabItem
             key={tab.slug}
             tab={tab}
