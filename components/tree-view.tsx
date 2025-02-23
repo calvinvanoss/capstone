@@ -210,7 +210,6 @@ export const TreeView = ({
   tree: DocNode[];
   isEditing: boolean;
 }) => {
-  const { project } = useProject();
   const [isHoveringTop, setIsHoveringTop] = useState(false);
 
   return (

@@ -1,23 +1,15 @@
 'use client';
 
-import type React from 'react';
-
 import { useState } from 'react';
-import { confirmSignUp, resendSignUpCode } from 'aws-amplify/auth';
+import { autoSignIn, confirmSignUp, resendSignUpCode } from 'aws-amplify/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
+import { useRouter } from 'next/navigation';
 
-interface EmailVerificationProps {
-  email: string;
-  onVerificationComplete: () => void;
-}
-
-export function EmailVerification({
-  email,
-  onVerificationComplete,
-}: EmailVerificationProps) {
+export function EmailVerification({ email }: { email: string }) {
+  const router = useRouter();
   const [verificationCode, setVerificationCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -26,23 +18,14 @@ export function EmailVerification({
     e.preventDefault();
     setIsLoading(true);
     try {
-      const { isSignUpComplete, nextStep } = await confirmSignUp({
+      const { nextStep } = await confirmSignUp({
         username: email,
         confirmationCode: verificationCode,
       });
 
-      if (isSignUpComplete) {
-        toast({
-          title: 'Success',
-          description: 'Your email has been verified successfully.',
-        });
-        onVerificationComplete();
-      } else {
-        console.log('Next step:', nextStep);
-        toast({
-          title: 'Additional Step Required',
-          description: 'Please complete the next step to finish signup.',
-        });
+      if (nextStep.signUpStep === 'COMPLETE_AUTO_SIGN_IN') {
+        await autoSignIn();
+        router.push('/dashboard');
       }
     } catch (error) {
       console.error('Error during verification:', error);
@@ -52,7 +35,6 @@ export function EmailVerification({
           'Failed to verify email. Please check the code and try again.',
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
     }
   };

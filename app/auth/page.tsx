@@ -1,7 +1,5 @@
 'use client';
 
-import type React from 'react';
-
 import { useState } from 'react';
 import { signIn, signUp } from 'aws-amplify/auth';
 import { Button } from '@/components/ui/button';
@@ -74,6 +72,9 @@ export default function AuthPage() {
           userAttributes: {
             email,
           },
+          autoSignIn: {
+            authFlowType: 'USER_SRP_AUTH',
+          },
         },
       });
       if (isSignUpComplete) {
@@ -108,11 +109,6 @@ export default function AuthPage() {
     }
   };
 
-  const handleVerificationComplete = () => {
-    setIsVerifying(false);
-    router.push('/dashboard');
-  };
-
   return (
     <div className="container mx-auto flex items-center justify-center min-h-screen">
       <Card className="w-full max-w-md">
@@ -122,10 +118,7 @@ export default function AuthPage() {
         </CardHeader>
         <CardContent>
           {isVerifying ? (
-            <EmailVerification
-              email={email}
-              onVerificationComplete={handleVerificationComplete}
-            />
+            <EmailVerification email={email} />
           ) : (
             <Tabs defaultValue="signin">
               <TabsList className="grid w-full grid-cols-2">

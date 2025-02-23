@@ -7,8 +7,15 @@ export default async function ProjectPage({
 }: {
   params: { projectId: string; slugs: string[] };
 }) {
-  const document = documentSchema.parse(
-    await getContent([params.projectId, ...params.slugs].join('/'))
+  const document = await getContent(
+    [params.projectId, ...params.slugs].join('/')
   );
-  return <Editor slugs={params.slugs} document={document} />;
+
+  if (!document) {
+    return <div>Document not found</div>;
+  }
+
+  return (
+    <Editor slugs={params.slugs} document={documentSchema.parse(document)} />
+  );
 }

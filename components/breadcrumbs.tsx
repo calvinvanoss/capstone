@@ -12,12 +12,9 @@ export function Breadcrumbs({ slugs }: { slugs: string[] }) {
   let href = `/${project.id}`;
   const breadcrumbs = slugs.map((slug) => {
     currentNode = currentNode?.children?.find((child) => child.slug === slug);
-    if (!currentNode) {
-      throw new Error('Invalid path');
-    }
-    href += `/${currentNode.slug}`;
+    href += `/${slug}`;
     return {
-      name: currentNode.name,
+      name: currentNode ? currentNode.name : 'Not Found',
       href,
     };
   });
