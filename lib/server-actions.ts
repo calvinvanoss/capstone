@@ -4,10 +4,8 @@ import { Project } from '@/types/project';
 import { cookiesClient } from './amplify-utils';
 
 /* NAMING CONVENTION:
-fullPath: string => full url path including project id
-path: string => path url excluding project id
-projectId: string => project id
-slugs: string[] => array of slugs (excludes project id)
+slugs: string[] => array of slugs
+path: string => slugs joined by '/'
 */
 
 export async function getProject(projectId: string) {
@@ -32,7 +30,8 @@ export async function createProject(name: string, description?: string) {
 
   if (projectData) {
     const { data, errors } = await cookiesClient.models.Document.create({
-      path: projectData.id,
+      projectId: projectData.id,
+      path: '/',
       content: '',
     });
 
@@ -46,6 +45,7 @@ export async function createProject(name: string, description?: string) {
   }
 }
 
+// TODO: on delete project, cascade delete documents
 export async function deleteProject(projectId: string) {
   const { data, errors } = await cookiesClient.models.Project.delete({
     id: projectId,
@@ -59,8 +59,9 @@ export async function deleteProject(projectId: string) {
   return data;
 }
 
-export async function postDocument(path: string) {
+export async function postDocument(projectId: string, path: string) {
   const { data, errors } = await cookiesClient.models.Document.create({
+    projectId,
     path,
     content: '',
   });
@@ -83,9 +84,10 @@ export async function putProject(project: Project) {
   }
 }
 
-export async function getContent(fullPath: string) {
+export async function getContent(projectId: string, path: string) {
   const { data, errors } = await cookiesClient.models.Document.get({
-    path: fullPath,
+    projectId,
+    path,
   });
 
   if (errors) {
@@ -105,7 +107,8 @@ export async function updateContent(
   content: string
 ) {
   const { data, errors } = await cookiesClient.models.Document.update({
-    path: `${projectId}/${path}`,
+    projectId,
+    path,
     content,
   });
 

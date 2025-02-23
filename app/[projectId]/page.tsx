@@ -7,7 +7,7 @@ export default async function ProjectHomePage({
 }: {
   params: { projectId: string };
 }) {
-  const document = await getContent(params.projectId);
+  const document = await getContent(params.projectId, '/');
 
   if (!document) {
     return <div>Document not found</div>;
@@ -16,7 +16,7 @@ export default async function ProjectHomePage({
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className={'flex-1 overflow-y-auto p-8'}>
-        <Editor slugs={[]} document={documentSchema.parse(document)} />
+        <Editor slugs={['/']} document={documentSchema.parse(document)} />
       </div>
     </div>
   );

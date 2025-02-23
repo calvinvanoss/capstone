@@ -42,8 +42,9 @@ export const projectSchema = z.object({
 export type Project = z.infer<typeof projectSchema>;
 
 export const documentSchema = z.object({
+  projectId: z.string(),
   path: z.string(),
-  content: z.string(),
+  content: z.string().nullable(),
 }).nullable();
 
 export type Document = z.infer<typeof documentSchema>;

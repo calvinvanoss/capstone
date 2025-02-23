@@ -50,9 +50,7 @@ export const useProject = create<ProjectStore>()(
       });
 
       const { project } = get();
-      await postDocument(
-        path ? `${project.id}/${path}/${slug}` : `${project.id}/${slug}`
-      );
+      await postDocument(project.id, path ? `${path}/${slug}` : slug);
       await putProject(project);
     },
   }))

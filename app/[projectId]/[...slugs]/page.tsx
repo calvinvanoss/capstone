@@ -7,9 +7,7 @@ export default async function ProjectPage({
 }: {
   params: { projectId: string; slugs: string[] };
 }) {
-  const document = await getContent(
-    [params.projectId, ...params.slugs].join('/')
-  );
+  const document = await getContent(params.projectId, params.slugs.join('/'));
 
   if (!document) {
     return <div>Document not found</div>;
