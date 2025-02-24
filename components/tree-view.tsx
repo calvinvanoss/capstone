@@ -1,29 +1,44 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useDrag, useDrop } from 'react-dnd';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ChevronRight, ChevronDown, GripVertical, Trash2 } from 'lucide-react';
+import { ChevronRight, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { DocNode } from '@/types/project';
 import { NewDocButton } from './new-doc-button';
 import { useProject } from '@/lib/zustand/store';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from './ui/context-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
+import { Label } from './ui/label';
+import { Input } from './ui/input';
 
 const TreeNode: React.FC<{
   node: DocNode;
   index: number;
   depth: number;
-  isEditing: boolean;
   activePath: string;
   parentPath: string;
-}> = ({ node, index, depth, isEditing, activePath, parentPath }) => {
+}> = ({ node, index, depth, activePath, parentPath }) => {
   const { project } = useProject();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isNameEditing, setIsNameEditing] = useState(false);
-  const [showAddButton, setShowAddButton] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+
+  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [isMoveOpen, setIsMoveOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [newName, setNewName] = useState('');
 
   const path = `${parentPath}/${node.slug}`;
   const isActive = activePath === path;
@@ -34,112 +49,67 @@ const TreeNode: React.FC<{
     }
   }, [activePath, path, node]);
 
-  const [{ isDragging }, drag] = useDrag({
-    type: 'TREE_ITEM',
-    item: { id: node.slug, type: 'TREE_ITEM' },
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
-  });
-
-  const [, drop] = useDrop({
-    accept: 'TREE_ITEM',
-    drop: (droppedItem: { id: string }, monitor) => {
-      if (droppedItem.id !== node.slug) {
-        // Handle the drop (e.g., update the tree structure)
-      }
-    },
-  });
-
   const toggleExpand = (e: React.MouseEvent) => {
     e.preventDefault();
-    if ('children' in node) {
-      setIsExpanded(!isExpanded);
-    }
+    setIsExpanded(!isExpanded);
   };
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('name change api call', e.target.value);
+  const handleRename = () => {
+    console.log('rename');
+    setIsRenameOpen(false);
   };
 
-  const handleEditToggle = () => {
-    setIsNameEditing(!isNameEditing);
+  const handleMove = () => {
+    console.log('move');
+    setIsMoveOpen(false);
+  };
+
+  const handleDelete = () => {
+    console.log('delete');
+    setIsDeleteOpen(false);
   };
 
   return (
     <>
-      <div
-        ref={isEditing ? drop : undefined}
-        onMouseEnter={() => {
-          setShowAddButton(true);
-          setIsHovering(true);
-        }}
-        onMouseLeave={() => {
-          setShowAddButton(false);
-          setIsHovering(false);
-        }}
-        className="relative group"
+      <ContextMenu
+        key={
+          isRenameOpen
+            ? 'rename'
+            : isMoveOpen
+              ? 'move'
+              : isDeleteOpen
+                ? 'delete'
+                : 'default'
+        }
       >
-        <div
-          className={cn(
-            'flex items-center py-1 px-2 rounded-md transition-colors relative',
-            isActive && !isEditing
-              ? 'bg-accent text-accent-foreground'
-              : 'hover:bg-muted',
-            isDragging ? 'opacity-50' : ''
-          )}
-          ref={isEditing ? drag : undefined}
-        >
+        <ContextMenuTrigger>
           <div
-            className="flex items-center flex-grow py-0.5 text-sm"
-            style={{ paddingLeft: `${depth * 8 + 4}px` }}
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+            className="relative group"
           >
-            {isEditing && (
+            <div
+              className={cn(
+                'flex items-center py-1 px-2 rounded-md transition-colors relative',
+                isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'
+              )}
+            >
               <div
-                className={cn(
-                  'absolute left-[-20px] w-6 h-full flex items-center justify-center transition-opacity duration-200',
-                  isHovering ? 'opacity-100' : 'opacity-0'
-                )}
+                className="flex items-center flex-grow py-0.5 text-sm"
+                style={{ paddingLeft: `${depth * 8 + 4}px` }}
               >
-                <GripVertical className="h-3.5 w-3.5 text-muted-foreground cursor-move" />
-              </div>
-            )}
-            {isEditing && isNameEditing ? (
-              <Input
-                value={node.name}
-                onChange={handleNameChange}
-                onBlur={handleEditToggle}
-                className="h-5 py-0 px-1 text-sm"
-                autoFocus
-              />
-            ) : (
-              <>
-                {!isEditing ? (
-                  <Link
-                    href={`/${project.id}/${path}`}
-                    prefetch={false}
-                    className={cn(
-                      'flex-grow flex items-center truncate',
-                      isActive && !isEditing ? 'font-medium' : '',
-                      'children' in node ? 'font-medium' : '',
-                      !isActive && !isEditing && 'hover:text-primary'
-                    )}
-                  >
-                    <span className="truncate">{node.name}</span>
-                  </Link>
-                ) : (
-                  <span
-                    className={cn(
-                      'flex-grow flex items-center truncate cursor-pointer',
-                      isActive ? 'font-medium' : '',
-                      'children' in node ? 'font-medium' : '',
-                      !isActive && 'hover:text-primary'
-                    )}
-                    onClick={handleEditToggle}
-                  >
-                    {node.name}
-                  </span>
-                )}
+                <Link
+                  href={`/${project.id}/${path}`}
+                  prefetch={false}
+                  className={cn(
+                    'flex-grow flex items-center truncate',
+                    isActive ? 'font-medium' : '',
+                    'children' in node ? 'font-medium' : '',
+                    !isActive && 'hover:text-primary'
+                  )}
+                >
+                  <span className="truncate">{node.name}</span>
+                </Link>
                 {'children' in node && (
                   <Button
                     variant="outline"
@@ -154,49 +124,100 @@ const TreeNode: React.FC<{
                     )}
                   </Button>
                 )}
-              </>
-            )}
+              </div>
+            </div>
+            {isHovering &&
+              (isExpanded ? (
+                <NewDocButton parentPath={path} index={0} />
+              ) : (
+                <NewDocButton parentPath={parentPath} index={index + 1} />
+              ))}
           </div>
-        </div>
-        {isEditing && (
-          <div
-            className={cn(
-              'absolute right-[-20px] top-0 h-full flex items-center justify-center transition-opacity duration-200',
-              isHovering ? 'opacity-100' : 'opacity-0'
-            )}
+          {isExpanded && node.children && (
+            <div className="mt-1">
+              {node.children.map((child, childIndex) => (
+                <TreeNode
+                  key={child.slug}
+                  node={child}
+                  index={childIndex}
+                  depth={depth + 1}
+                  activePath={activePath}
+                  parentPath={path}
+                />
+              ))}
+            </div>
+          )}
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onSelect={() => setIsRenameOpen(true)}>
+            Rename
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => setIsMoveOpen(true)}>
+            Move
+          </ContextMenuItem>
+          <ContextMenuItem
+            onSelect={() => setIsDeleteOpen(true)}
+            className="text-red-600"
           >
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-5 w-5 p-0 text-destructive"
-              onClick={() => console.log('delete item api call')}
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
+            Delete
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+
+      {/* Rename Dialog */}
+      <Dialog open={isRenameOpen} onOpenChange={setIsRenameOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Document</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="rename" className="text-right">
+                New Name
+              </Label>
+              <Input
+                id="rename"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
           </div>
-        )}
-        {showAddButton &&
-          (isExpanded ? (
-            <NewDocButton parentPath={path} index={0} />
-          ) : (
-            <NewDocButton parentPath={parentPath} index={index + 1} />
-          ))}
-      </div>
-      {isExpanded && node.children && (
-        <div className="mt-1">
-          {node.children.map((child, childIndex) => (
-            <TreeNode
-              key={child.slug}
-              node={child}
-              index={childIndex}
-              depth={depth + 1}
-              isEditing={isEditing}
-              activePath={activePath}
-              parentPath={path}
-            />
-          ))}
-        </div>
-      )}
+          <DialogFooter>
+            <Button onClick={handleRename} disabled={!newName.trim()}>
+              Rename
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Move Dialog */}
+      <Dialog open={isMoveOpen} onOpenChange={setIsMoveOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Move Document</DialogTitle>
+          </DialogHeader>
+          {/* Add move logic here */}
+          <DialogFooter>
+            <Button onClick={handleMove}>Move</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Document</DialogTitle>
+          </DialogHeader>
+          <p>Are you sure you want to delete this document?</p>
+          <DialogFooter>
+            <Button onClick={handleDelete} className="text-red-600">
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
@@ -204,11 +225,9 @@ const TreeNode: React.FC<{
 export const TreeView = ({
   slugs,
   tree,
-  isEditing,
 }: {
   slugs: string[];
   tree: DocNode[];
-  isEditing: boolean;
 }) => {
   const [isHoveringTop, setIsHoveringTop] = useState(false);
 
@@ -229,7 +248,6 @@ export const TreeView = ({
           node={item}
           index={index}
           depth={0}
-          isEditing={isEditing}
           activePath={slugs.join('/')}
           parentPath={slugs[0]}
         />
