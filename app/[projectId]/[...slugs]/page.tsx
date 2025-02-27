@@ -1,5 +1,5 @@
 import Editor from '@/components/yoopta/editor';
-import { getContent } from '@/lib/server-actions';
+import { getDocument } from '@/lib/server-actions';
 import { documentSchema } from '@/types/project';
 
 export default async function ProjectPage({
@@ -7,7 +7,10 @@ export default async function ProjectPage({
 }: {
   params: { projectId: string; slugs: string[] };
 }) {
-  const document = await getContent(params.projectId, params.slugs.join('/'));
+  const document = await getDocument(
+    parseInt(params.projectId),
+    params.slugs.join('/')
+  );
 
   if (!document) {
     return <div>Document not found</div>;

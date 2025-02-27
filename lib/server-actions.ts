@@ -1,118 +1,105 @@
 'use server';
 
 import { Project } from '@/types/project';
-import { cookiesClient } from './amplify-utils';
+import { db } from '@/db/db';
+import { documents, projects } from '@/db/schema';
+import { and, eq, isNull } from 'drizzle-orm';
+import { YooptaContentValue } from '@yoopta/editor';
 
 /* NAMING CONVENTION:
 slugs: string[] => array of slugs
 path: string => slugs joined by '/'
 */
 
-export async function getProject(projectId: string) {
-  const { data, errors } = await cookiesClient.models.Project.get({
-    id: projectId,
-  });
+// TODO: merge with getProject after migrate auth to neon, make projectId optional
+export async function getProjects() {
+  const res = await db.select().from(projects);
 
-  if (errors) {
-    console.error('error:', errors);
-  }
-
-  return data;
+  return res;
 }
 
-export async function createProject(name: string, description?: string) {
-  const { data: projectData, errors: projectErrors } =
-    await cookiesClient.models.Project.create({
-      name,
-      description,
-      children: '[]',
-    });
-
-  if (projectData) {
-    const { data, errors } = await cookiesClient.models.Document.create({
-      projectId: projectData.id,
-      path: '/',
-      content: '',
-    });
-
-    if (errors) {
-      console.error('error:', errors);
-    }
-  }
-
-  if (projectErrors) {
-    console.error('error:', projectErrors);
-  }
-}
-
-// TODO: on delete project, cascade delete documents
-export async function deleteProject(projectId: string) {
-  const { data, errors } = await cookiesClient.models.Project.delete({
-    id: projectId,
-  });
-
-  if (errors) {
-    console.error('error:', errors);
-    throw new Error('Failed to delete project');
-  }
-
-  return data;
-}
-
-export async function postDocument(projectId: string, path: string) {
-  const { data, errors } = await cookiesClient.models.Document.create({
-    projectId,
-    path,
-    content: '',
-  });
-
-  if (errors) {
-    console.error('error:', errors);
-  }
-}
-
-export async function putProject(project: Project) {
-  const { data, errors } = await cookiesClient.models.Project.update({
-    id: project.id,
-    description: project.description,
-    name: project.name,
-    children: JSON.stringify(project.children),
-  });
-
-  if (errors) {
-    console.error('error:', errors);
-  }
-}
-
-export async function getContent(projectId: string, path: string) {
-  const { data, errors } = await cookiesClient.models.Document.get({
-    projectId,
-    path,
-  });
-
-  if (errors) {
-    console.error('error:', errors);
-  }
-
-  if (data) {
-    return data;
+export async function getProject(projectId: number) {
+  const res = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.id, projectId));
+  if (res) {
+    return res[0];
   }
 
   return null;
 }
 
-export async function updateContent(
-  projectId: string,
-  path: string,
-  content: string
-) {
-  const { data, errors } = await cookiesClient.models.Document.update({
+export async function createProject(name: string, description?: string) {
+  const res = await db
+    .insert(projects)
+    .values({
+      name,
+      description,
+    })
+    .returning({ id: projects.id });
+
+  if (res) {
+    await postDocument(res[0].id);
+  }
+
+  return res;
+}
+
+export async function deleteProject(projectId: number) {
+  const res = await db.delete(projects).where(eq(projects.id, projectId));
+}
+
+export async function postDocument(projectId: number, path?: string) {
+  const res = await db.insert(documents).values({
     projectId,
     path,
-    content,
   });
+}
 
-  if (errors) {
-    console.error('error:', errors);
+export async function putProject(project: Project) {
+  const res = await db
+    .update(projects)
+    .set({
+      description: project.description,
+      name: project.name,
+      children: project.children,
+    })
+    .where(eq(projects.id, project.id));
+}
+
+export async function getDocument(projectId: number, path?: string) {
+  const res = await db
+    .select()
+    .from(documents)
+    .where(
+      and(
+        eq(documents.projectId, projectId),
+        path ? eq(documents.path, path) : isNull(documents.path)
+      )
+    );
+
+  if (res) {
+    return res[0];
   }
+
+  return null;
+}
+
+export async function updateDocument(
+  projectId: number,
+  path: string,
+  content: YooptaContentValue
+) {
+  const res = await db
+    .update(documents)
+    .set({
+      content,
+    })
+    .where(
+      and(
+        eq(documents.projectId, projectId),
+        path ? eq(documents.path, path) : isNull(documents.path)
+      )
+    );
 }

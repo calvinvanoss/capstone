@@ -16,7 +16,7 @@ export default async function ProjectHomeLayout({
   if (params.projectId === 'favicon.ico') {
     return null;
   }
-  const project = await getProject(params.projectId);
+  const project = await getProject(parseInt(params.projectId));
 
   return (
     <DndWrapper>

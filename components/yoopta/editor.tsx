@@ -34,7 +34,7 @@ import Table from '@yoopta/table';
 import Divider from '@yoopta/divider';
 import { EditButton } from '../edit-button';
 import { Document } from '@/types/project';
-import { updateContent } from '@/lib/server-actions';
+import { updateDocument } from '@/lib/server-actions';
 import { useProject } from '@/lib/zustand/store';
 
 const MARKS = [Bold, Italic, CodeMark, Underline, Strike, Highlight];
@@ -92,11 +92,11 @@ export default function Editor({
 }) {
   const { project } = useProject();
   const editor = useMemo(() => createYooptaEditor(), []);
-  const [value, setValue] = useState<YooptaContentValue>(
-    document && document.content ? JSON.parse(document.content) : undefined
+  const [value, setValue] = useState<YooptaContentValue | undefined>(
+    document.content || undefined
   );
-  const [savedValue, setSavedValue] = useState<YooptaContentValue>(
-    document && document.content ? JSON.parse(document.content) : undefined
+  const [savedValue, setSavedValue] = useState<YooptaContentValue | undefined>(
+    document.content || undefined
   );
   const [isEditing, setIsEditing] = useState(false);
 
@@ -116,7 +116,7 @@ export default function Editor({
     setIsEditing(false);
     if (value != undefined) {
       if (document) {
-        updateContent(project.id, slugs.join('/'), JSON.stringify(value));
+        updateDocument(project.id, slugs.join('/'), value);
       }
     }
   };

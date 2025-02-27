@@ -1,3 +1,4 @@
+import { YooptaContentValue } from '@yoopta/editor';
 import { z } from 'zod';
 
 // Step 1: Define the base schema without recursion
@@ -21,30 +22,17 @@ const docNodesSchema = z.array(docNodeSchema);
 
 export const projectSchema = z.object({
     name: z.string(),
-    children: z.string().transform((str) => {
-      try {
-        return docNodesSchema.parse(JSON.parse(str)); // Parse the stringified JSON and validate it
-      } catch (error) {
-        if (error instanceof z.ZodError) {
-          console.error('Validation errors:', error.errors);
-        } else {
-          console.error('Unexpected error:', error);
-        }
-        return [];
-      }
-    }),
-    id: z.string(),
+    children: docNodesSchema,
+    id: z.number(),
     description: z.string().nullable(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
   });
 
 export type Project = z.infer<typeof projectSchema>;
 
 export const documentSchema = z.object({
-  projectId: z.string(),
-  path: z.string(),
-  content: z.string().nullable(),
-}).nullable();
+  projectId: z.number(),
+  path: z.string().nullable(),
+  content: z.custom<YooptaContentValue>().nullable(),
+});
 
 export type Document = z.infer<typeof documentSchema>;

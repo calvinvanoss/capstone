@@ -6,11 +6,7 @@ import { Trash2 } from 'lucide-react';
 import { deleteProject } from '@/lib/server-actions';
 import { useRouter } from 'next/navigation';
 
-interface DeleteButtonProps {
-  projectId: string;
-}
-
-export function DeleteButton({ projectId }: DeleteButtonProps) {
+export function DeleteButton({ projectId }: { projectId: number }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
 

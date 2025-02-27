@@ -10,16 +10,7 @@ import {
 } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
 import { DeleteButton } from '@/components/delete-button';
-import { cookiesClient } from '@/lib/amplify-utils';
-
-async function getProjects() {
-  const { data: projects, errors } = await cookiesClient.models.Project.list();
-  if (errors) {
-    console.error('Error fetching projects:', errors);
-    return [];
-  }
-  return projects;
-}
+import { getProjects } from '@/lib/server-actions';
 
 export async function ProjectList() {
   const projects = await getProjects();
@@ -41,7 +32,7 @@ export async function ProjectList() {
           </CardHeader>
           <CardContent className="flex-grow">
             <p className="text-xs text-muted-foreground">
-              Last edited: {new Date(project.updatedAt).toLocaleDateString()}
+              description: {project.description}
             </p>
           </CardContent>
           <CardFooter className="flex justify-between">
