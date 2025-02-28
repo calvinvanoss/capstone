@@ -4,6 +4,7 @@ import DndWrapper from '@/components/dnd-wrapper';
 import { projectSchema } from '@/types/project';
 import { getProject } from '@/lib/server-actions';
 import { ProjectProvider } from '@/components/project-provider';
+import { auth, signIn } from '@/auth';
 
 export default async function ProjectHomeLayout({
   children,
@@ -12,6 +13,9 @@ export default async function ProjectHomeLayout({
   children: React.ReactNode;
   params: { projectId: string };
 }) {
+  const session = await auth();
+  if (!session) await signIn();
+
   // Next.js will continually call this route with favicon.ico as the projectId for some reason...
   if (params.projectId === 'favicon.ico') {
     return null;

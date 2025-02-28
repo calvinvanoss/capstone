@@ -11,6 +11,7 @@ import {
 import { ArrowRight } from 'lucide-react';
 import { DeleteButton } from '@/components/delete-button';
 import { getProjects } from '@/lib/server-actions';
+import { EditProjectDropdown } from './edit-project-dropdown';
 
 export async function ProjectList() {
   const projects = await getProjects();
@@ -19,21 +20,20 @@ export async function ProjectList() {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {projects.map((project) => (
         <Card
-          key={project.id}
+          key={project.projects.id}
           className="flex flex-col hover:shadow-md transition-shadow duration-200"
         >
-          <CardHeader>
+          <CardHeader className="relative">
+            <EditProjectDropdown />
             <CardTitle className="text-lg font-semibold">
-              {project.name}
+              {project.projects.name}
             </CardTitle>
             <CardDescription className="text-sm text-muted-foreground">
-              {project.description}
+              {project.projects.description}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-grow">
-            <p className="text-xs text-muted-foreground">
-              description: {project.description}
-            </p>
+            <p className="text-xs text-muted-foreground">more info:</p>
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button
@@ -42,7 +42,7 @@ export async function ProjectList() {
               className="hover:bg-accent hover:text-accent-foreground"
             >
               <Link
-                href={`/${project.id}`}
+                href={`/${project.projects.id}`}
                 prefetch={false}
                 className="flex items-center justify-center"
               >
@@ -50,10 +50,14 @@ export async function ProjectList() {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <DeleteButton projectId={project.id} />
+            <DeleteButton projectId={project.projects.id} />
           </CardFooter>
         </Card>
       ))}
     </div>
   );
 }
+
+/*
+
+            */

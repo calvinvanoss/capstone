@@ -1,36 +1,67 @@
 'use server';
 
 import { Project } from '@/types/project';
-import { db } from '@/db/db';
-import { documents, projects } from '@/db/schema';
+import { db } from '@/lib/db/drizzle';
+import { documents, projects, userProjectPermissions } from '@/lib/db/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import { YooptaContentValue } from '@yoopta/editor';
+import { auth } from '@/auth';
 
 /* NAMING CONVENTION:
 slugs: string[] => array of slugs
 path: string => slugs joined by '/'
 */
 
-// TODO: merge with getProject after migrate auth to neon, make projectId optional
 export async function getProjects() {
-  const res = await db.select().from(projects);
+  const session = await auth();
+  if (!session || !session.user) throw new Error('Session not found');
+  const user = session.user;
+  if (!user || !user.id) throw new Error('User not found');
+
+  const res = await db
+    .select()
+    .from(projects)
+    .where(eq(userProjectPermissions.userId, user.id))
+    .leftJoin(
+      userProjectPermissions,
+      eq(userProjectPermissions.projectId, projects.id)
+    );
 
   return res;
 }
 
 export async function getProject(projectId: number) {
+  const session = await auth();
+  if (!session || !session.user) throw new Error('Session not found');
+  const user = session.user;
+  if (!user || !user.id) throw new Error('User not found');
+
+  const permissions = await db
+    .select()
+    .from(userProjectPermissions)
+    .where(
+      and(
+        eq(userProjectPermissions.userId, user.id),
+        eq(userProjectPermissions.projectId, projectId)
+      )
+    );
+  if (permissions.length === 0) throw new Error('Permission denied');
+
   const res = await db
     .select()
     .from(projects)
     .where(eq(projects.id, projectId));
-  if (res) {
-    return res[0];
-  }
+  if (res.length !== 1) throw new Error('Project not found');
 
-  return null;
+  return res[0];
 }
 
 export async function createProject(name: string, description?: string) {
+  const session = await auth();
+  if (!session || !session.user) throw new Error('Session not found');
+  const user = session.user;
+  if (!user || !user.id) throw new Error('User not found');
+
   const res = await db
     .insert(projects)
     .values({
@@ -39,26 +70,31 @@ export async function createProject(name: string, description?: string) {
     })
     .returning({ id: projects.id });
 
-  if (res) {
+  if (res.length === 1) {
     await postDocument(res[0].id);
+    await db.insert(userProjectPermissions).values({
+      userId: user.id,
+      projectId: res[0].id,
+      role: 'admin',
+    });
   }
 
   return res;
 }
 
 export async function deleteProject(projectId: number) {
-  const res = await db.delete(projects).where(eq(projects.id, projectId));
+  await db.delete(projects).where(eq(projects.id, projectId));
 }
 
 export async function postDocument(projectId: number, path?: string) {
-  const res = await db.insert(documents).values({
+  await db.insert(documents).values({
     projectId,
     path,
   });
 }
 
 export async function putProject(project: Project) {
-  const res = await db
+  await db
     .update(projects)
     .set({
       description: project.description,
@@ -69,6 +105,22 @@ export async function putProject(project: Project) {
 }
 
 export async function getDocument(projectId: number, path?: string) {
+  const session = await auth();
+  if (!session || !session.user) throw new Error('Session not found');
+  const user = session.user;
+  if (!user || !user.id) throw new Error('User not found');
+
+  const permissions = await db
+    .select()
+    .from(userProjectPermissions)
+    .where(
+      and(
+        eq(userProjectPermissions.userId, user.id),
+        eq(userProjectPermissions.projectId, projectId)
+      )
+    );
+  if (permissions.length === 0) throw new Error('Permission denied');
+
   const res = await db
     .select()
     .from(documents)
@@ -78,12 +130,9 @@ export async function getDocument(projectId: number, path?: string) {
         path ? eq(documents.path, path) : isNull(documents.path)
       )
     );
+  if (res.length !== 1) throw new Error('Document not found');
 
-  if (res) {
-    return res[0];
-  }
-
-  return null;
+  return res[0];
 }
 
 export async function updateDocument(
@@ -91,7 +140,7 @@ export async function updateDocument(
   path: string,
   content: YooptaContentValue
 ) {
-  const res = await db
+  await db
     .update(documents)
     .set({
       content,
