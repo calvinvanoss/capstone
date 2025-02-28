@@ -2,7 +2,12 @@
 
 import { Project } from '@/types/project';
 import { db } from '@/lib/db/drizzle';
-import { documents, projects, userProjectPermissions } from '@/lib/db/schema';
+import {
+  documents,
+  projects,
+  userProjectPermissions,
+  users,
+} from '@/lib/db/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import { YooptaContentValue } from '@yoopta/editor';
 import { auth } from '@/auth';
@@ -151,4 +156,19 @@ export async function updateDocument(
         path ? eq(documents.path, path) : isNull(documents.path)
       )
     );
+}
+
+export async function authorizeCredentials(username: string) {
+  const user = await db
+    .insert(users)
+    .values({
+      name: username,
+      email: username,
+    })
+    .onConflictDoUpdate({ target: users.email, set: { email: username } })
+    .returning({ id: users.id, name: users.name, email: users.email });
+
+  if (user.length !== 1) throw new Error('User not found');
+
+  return user[0];
 }
