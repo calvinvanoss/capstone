@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/tooltip';
 import { ThemeToggle } from './theme-toggle';
 import Link from 'next/link';
-import { useProject } from '@/lib/zustand/store';
+import { useProject } from '@/lib/store';
 
 export function ProjectHeader() {
   const { project } = useProject();
@@ -35,11 +35,11 @@ export function ProjectHeader() {
           </Tooltip>
         </TooltipProvider>
         <Link
-          href={`/${project.id}`}
+          href={`/${project.versionId}`}
           className="group px-3 py-2 rounded-md transition-colors duration-200 ease-in-out hover:bg-muted"
         >
           <h1 className="text-2xl font-bold group-hover:text-primary">
-            {project.name}
+            {project.projectName}
           </h1>
         </Link>
       </div>

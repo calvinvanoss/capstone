@@ -1,7 +1,7 @@
 'use client';
 
 import { TreeView } from './tree-view';
-import { useProject } from '@/lib/zustand/store';
+import { useProject } from '@/lib/store';
 
 export function ProjectSidebar({ slugs }: { slugs: string[] }) {
   const { project } = useProject();

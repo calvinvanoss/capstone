@@ -1,7 +1,7 @@
 import { ProjectHeader } from '@/components/project-header';
 import React from 'react';
-import { projectSchema } from '@/types/project';
-import { getProject } from '@/lib/server-actions';
+import { projectVersionSchema } from '@/lib/types';
+import { getVersion } from '@/lib/server-actions';
 import { ProjectProvider } from '@/components/project-provider';
 import { auth, signIn } from '@/auth';
 
@@ -19,10 +19,10 @@ export default async function ProjectHomeLayout({
   if (params.projectId === 'favicon.ico') {
     return null;
   }
-  const project = await getProject(parseInt(params.projectId));
+  const project = await getVersion(parseInt(params.projectId));
 
   return (
-    <ProjectProvider project={projectSchema.parse(project)}>
+    <ProjectProvider project={projectVersionSchema.parse(project)}>
       <div className="flex flex-col min-h-screen">
         <ProjectHeader />
         {children}

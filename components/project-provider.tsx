@@ -1,14 +1,14 @@
 'use client';
 
-import { useProject } from '@/lib/zustand/store';
-import { Project } from '@/types/project';
+import { useProject } from '@/lib/store';
+import { ProjectVersion } from '@/lib/types';
 import { useEffect, useState } from 'react';
 
 export function ProjectProvider({
   project,
   children,
 }: {
-  project: Project;
+  project: ProjectVersion;
   children: React.ReactNode;
 }) {
   const { setProject } = useProject();

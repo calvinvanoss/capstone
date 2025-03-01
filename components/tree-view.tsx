@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { DocNode } from '@/types/project';
+import { DocNode } from '@/lib/types';
 import { NewDocButton } from './new-doc-button';
-import { useProject } from '@/lib/zustand/store';
+import { useProject } from '@/lib/store';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -44,6 +44,7 @@ const TreeNode: React.FC<{
   const isActive = activePath === path;
 
   useEffect(() => {
+    // TODO: make children type safe
     if (activePath.includes(path) && 'children' in node) {
       setIsExpanded(true);
     }
@@ -99,7 +100,7 @@ const TreeNode: React.FC<{
                 style={{ paddingLeft: `${depth * 8 + 4}px` }}
               >
                 <Link
-                  href={`/${project.id}/${path}`}
+                  href={`/${project.versionId}/${path}`}
                   prefetch={false}
                   className={cn(
                     'flex-grow flex items-center truncate',

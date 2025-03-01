@@ -8,8 +8,8 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { DocNode } from '@/types/project';
-import { useProject } from '@/lib/zustand/store';
+import { DocNode } from '@/lib/types';
+import { useProject } from '@/lib/store';
 import {
   Dialog,
   DialogContent,
@@ -63,7 +63,7 @@ export function TabItem({ doc }: { doc: DocNode }) {
             value={doc.slug}
             className="px-3 py-1.5 text-sm font-medium transition-all rounded-md data-[state=active]:bg-muted data-[state=active]:text-foreground flex flex-col items-center justify-between"
           >
-            <Link href={`/${project.id}/${doc.slug}`} prefetch={false}>
+            <Link href={`/${project.versionId}/${doc.slug}`} prefetch={false}>
               {doc.name}
             </Link>
           </TabsTrigger>

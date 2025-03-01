@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { useProject } from '@/lib/zustand/store';
-import { Project, DocNode } from '@/types/project';
+import { useProject } from '@/lib/store';
+import { ProjectVersion, DocNode } from '@/lib/types';
 
 export function Breadcrumbs({ slugs }: { slugs: string[] }) {
   const { project } = useProject();
 
-  let currentNode: Project | DocNode | undefined = project;
-  let href = `/${project.id}`;
+  let currentNode: ProjectVersion | DocNode | undefined = project;
+  let href = `/${project.versionId}`;
   const breadcrumbs = slugs.map((slug) => {
     currentNode = currentNode?.children?.find((child) => child.slug === slug);
     href += `/${slug}`;

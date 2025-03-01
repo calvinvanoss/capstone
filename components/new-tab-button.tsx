@@ -17,10 +17,10 @@ import {
 } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
-import { useProject } from '@/lib/zustand/store';
+import { useProject } from '@/lib/store';
 
 export function NewTabButton() {
-  const { project, createDocument } = useProject();
+  const { project, addDoc } = useProject();
   const [isOpen, setIsOpen] = useState(false);
   const [newTabName, setNewTabName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,7 +29,7 @@ export function NewTabButton() {
     if (newTabName.trim()) {
       setIsLoading(true);
       try {
-        createDocument(newTabName, '', project.children.length, 'folder');
+        addDoc(newTabName, '', project.children.length, 'folder');
         setIsOpen(false);
         setNewTabName('');
         setIsLoading(false);

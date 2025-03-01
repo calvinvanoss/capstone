@@ -12,7 +12,7 @@ import { Button } from './ui/button';
 import { DialogHeader, DialogFooter } from './ui/dialog';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { useProject } from '@/lib/zustand/store';
+import { useProject } from '@/lib/store';
 
 export function NewDocButton({
   parentPath: parentPath,
@@ -21,16 +21,16 @@ export function NewDocButton({
   parentPath: string;
   index: number;
 }) {
-  const { createDocument } = useProject();
+  const { addDoc } = useProject();
   const [isOpen, setIsOpen] = useState(false);
   const [newDocName, setNewDocName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleCreateDocument = async (type: 'folder' | 'file') => {
+  const handleAddDocument = async (type: 'folder' | 'file') => {
     if (newDocName.trim()) {
       setIsLoading(true);
       try {
-        createDocument(newDocName, parentPath, index, type);
+        addDoc(newDocName, parentPath, index, type);
         setIsOpen(false);
         setNewDocName('');
         setIsLoading(false);
@@ -72,13 +72,13 @@ export function NewDocButton({
           </div>
           <DialogFooter>
             <Button
-              onClick={() => handleCreateDocument('folder')}
+              onClick={() => handleAddDocument('folder')}
               disabled={!newDocName.trim() || isLoading}
             >
               New Folder
             </Button>
             <Button
-              onClick={() => handleCreateDocument('file')}
+              onClick={() => handleAddDocument('file')}
               disabled={!newDocName.trim() || isLoading}
             >
               New File

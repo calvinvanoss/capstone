@@ -4,7 +4,7 @@ import React from 'react';
 import { Tabs, TabsList } from '@/components/ui/tabs';
 import NewTabButton from './new-tab-button';
 import { useParams } from 'next/navigation';
-import { useProject } from '@/lib/zustand/store';
+import { useProject } from '@/lib/store';
 import { TabItem } from './tab-item';
 
 export function ProjectTabs() {

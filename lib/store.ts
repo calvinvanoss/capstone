@@ -1,14 +1,14 @@
 'use client';
 
-import { DocNode, Project } from '@/types/project';
+import { DocNode, ProjectVersion } from '@/lib/types';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import { postDocument, putProject } from '../server-actions';
+import { createDoc, updateVersionTree } from './server-actions';
 
 interface ProjectStore {
-  project: Project;
-  setProject: (project: Project) => void;
-  createDocument: (
+  project: ProjectVersion;
+  setProject: (project: ProjectVersion) => void;
+  addDoc: (
     name: string,
     path: string,
     index: number,
@@ -18,17 +18,17 @@ interface ProjectStore {
 
 export const useProject = create<ProjectStore>()(
   immer((set, get) => ({
-    project: {} as Project,
+    project: {} as ProjectVersion,
     setProject: (project) =>
       set((state) => {
         state.project = project;
       }),
-    createDocument: async (name, path, index, type) => {
+    addDoc: async (name, path, index, type) => {
       const slug = slugify(name);
 
       set((state) => {
         const slugs = path ? path.split('/') : [];
-        let currentNode: Project | DocNode | undefined = state.project;
+        let currentNode: ProjectVersion | DocNode | undefined = state.project;
         for (const slug of slugs) {
           currentNode = currentNode.children?.find(
             (child) => child.slug === slug
@@ -50,8 +50,12 @@ export const useProject = create<ProjectStore>()(
       });
 
       const { project } = get();
-      await postDocument(project.id, path ? `${path}/${slug}` : slug);
-      await putProject(project);
+      await createDoc(
+        project.projectId,
+        project.versionId,
+        path ? `${path}/${slug}` : slug
+      );
+      await updateVersionTree(project.versionId, project.children);
     },
   }))
 );

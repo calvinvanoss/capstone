@@ -13,37 +13,61 @@ import type { AdapterAccountType } from 'next-auth/adapters';
 
 // TODO: check out drizzle eslint plugin
 // TODO: check out drizzle zod extension
+// TODO: convert aliases to singular to match drizzle studio (make sure doesnt break authjs)
 export const roleEnum = pgEnum('role', ['admin', 'editor', 'viewer']);
 
-export const projects = pgTable('projects', {
+export const projects = pgTable('project', {
   id: serial().primaryKey(),
   name: text().notNull(),
   description: text(),
-  children: jsonb().default([]).notNull(),
+  currentVersion: text('current_version').notNull(),
 });
 
-// TODO: composite idx on (project_id, path)?
-export const documents = pgTable('documents', {
-  path: text(),
-  content: jsonb(),
+export const versions = pgTable('version', {
+  id: serial().primaryKey(),
+  version: text().notNull(), // semantic versioning: MAJOR.MINOR.PATCH
+  children: jsonb().default([]).notNull(), // TODO: rename tree?
+  parentVersionId: integer('parent_version_id'),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
   projectId: integer('project_id')
     .references(() => projects.id, { onDelete: 'cascade' })
     .notNull(),
 });
 
-export const userProjectPermissions = pgTable(
-  'user_project_permissions',
-  {
-    userId: text('user_id')
-      .references(() => users.id, { onDelete: 'cascade' })
-      .notNull(),
-    projectId: integer('project_id')
-      .references(() => projects.id, { onDelete: 'cascade' })
-      .notNull(),
-    role: roleEnum().notNull(),
-  },
-  (table) => [primaryKey({ columns: [table.userId, table.projectId] })]
-);
+// TODO: composite idx on [projectVersionId, path]?
+export const docNodes = pgTable('doc_node', {
+  id: serial().primaryKey(),
+  path: text(),
+  versionId: integer('version_id')
+    .references(() => versions.id, { onDelete: 'cascade' })
+    .notNull(),
+  contentBlockId: integer('content_block_id')
+    .references(() => contentBlocks.id, { onDelete: 'cascade' })
+    .notNull(),
+});
+
+export const contentBlocks = pgTable('content_block', {
+  id: serial().primaryKey(),
+  content: jsonb(),
+  parentVersionId: integer('parent_version_id')
+    .references(() => versions.id, { onDelete: 'cascade' })
+    .notNull(),
+  projectId: integer('project_id')
+    .references(() => projects.id, { onDelete: 'cascade' })
+    .notNull(),
+});
+
+// TODO: composite idx on [userId, projectId]?
+export const permissions = pgTable('permission', {
+  id: serial().primaryKey(),
+  userId: text('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  projectId: integer('project_id')
+    .references(() => projects.id, { onDelete: 'cascade' })
+    .notNull(),
+  role: roleEnum().notNull(),
+});
 
 // automatically filled by authjs
 export const users = pgTable('user', {
@@ -135,9 +159,11 @@ export const authenticators = pgTable(
 
 export type InsertProject = typeof projects.$inferInsert;
 export type SelectProject = typeof projects.$inferSelect;
-export type InsertDocument = typeof documents.$inferInsert;
-export type SelectDocument = typeof documents.$inferSelect;
-export type InsertUserProjectPermission =
-  typeof userProjectPermissions.$inferInsert;
-export type SelectUserProjectPermission =
-  typeof userProjectPermissions.$inferSelect;
+export type InsertVersion = typeof versions.$inferInsert;
+export type SelectVersion = typeof versions.$inferSelect;
+export type InsertDocNode = typeof docNodes.$inferInsert;
+export type SelectDocNode = typeof docNodes.$inferSelect;
+export type InsertContentBlock = typeof contentBlocks.$inferInsert;
+export type SelectContentBlock = typeof contentBlocks.$inferSelect;
+export type InsertPermission = typeof permissions.$inferInsert;
+export type SelectPermission = typeof permissions.$inferSelect;

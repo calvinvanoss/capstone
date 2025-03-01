@@ -1,6 +1,6 @@
 import Editor from '@/components/yoopta/editor';
-import { getDocument } from '@/lib/server-actions';
-import { documentSchema } from '@/types/project';
+import { getDocContent } from '@/lib/server-actions';
+import { YooptaContentValue } from '@yoopta/editor';
 
 export default async function ProjectHomePage({
   params,
@@ -12,16 +12,19 @@ export default async function ProjectHomePage({
     return null;
   }
 
-  const document = await getDocument(parseInt(params.projectId));
+  const blockContent = await getDocContent(parseInt(params.projectId));
 
-  if (!document) {
+  if (!blockContent) {
     return <div>Document not found</div>;
   }
 
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className={'flex-1 overflow-y-auto p-8'}>
-        <Editor slugs={[]} document={documentSchema.parse(document)} />
+        <Editor
+          slugs={[]}
+          content={blockContent.content as YooptaContentValue | undefined}
+        />
       </div>
     </div>
   );
