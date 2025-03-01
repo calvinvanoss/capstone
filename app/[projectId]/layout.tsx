@@ -10,7 +10,7 @@ export default async function ProjectHomeLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: { projectId: string };
+  params: { projectId: string }; // TODO: refactor to /projectName(slug)/versionName for UX?
 }) {
   const session = await auth();
   if (!session) await signIn();
