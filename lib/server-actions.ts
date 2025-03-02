@@ -15,33 +15,82 @@ import { YooptaContentValue } from '@yoopta/editor';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 
-// TODO: refactor to use transactions
 export async function shareProject(
   projectId: number,
   email: string,
   role: 'admin' | 'editor' | 'viewer'
 ) {
-  const user = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.email, email));
+  await db.transaction(async (tx) => {
+    const user = await tx
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, email));
 
-  if (user.length !== 1) throw new Error('User not found');
+    if (user.length !== 1) throw new Error('User not found');
 
-  await db
-    .insert(permissions)
-    .values({
-      userId: user[0].id,
-      projectId,
-      role,
-    })
-    .onConflictDoUpdate({
-      target: [permissions.projectId, permissions.userId],
-      set: { role },
-    });
+    await tx
+      .insert(permissions)
+      .values({
+        userId: user[0].id,
+        projectId,
+        role,
+      })
+      .onConflictDoUpdate({
+        target: [permissions.projectId, permissions.userId],
+        set: { role },
+      });
 
-  if (role === 'admin' || role === 'editor') {
-    const latestVersion = await db
+    if (role === 'admin' || role === 'editor') {
+      const latestVersion = await tx
+        .select({
+          latestChildren: versions.children,
+          latestVersionId: versions.id,
+        })
+        .from(versions)
+        .where(
+          and(
+            eq(projects.currentVersionCount, versions.versionCount),
+            eq(projects.id, projectId)
+          )
+        )
+        .innerJoin(projects, eq(projects.id, versions.projectId));
+
+      const newVersion = await tx
+        .insert(versions)
+        .values({
+          versionCount: -1,
+          children: latestVersion[0].latestChildren,
+          parentVersionId: latestVersion[0].latestVersionId,
+          projectId,
+          userId: user[0].id,
+        })
+        .returning({ id: versions.id });
+
+      const latestNodes = await tx
+        .select()
+        .from(docNodes)
+        .where(eq(docNodes.versionId, latestVersion[0].latestVersionId));
+
+      await tx.insert(docNodes).values(
+        latestNodes.map((node) => ({
+          versionId: newVersion[0].id,
+          contentBlockId: node.contentBlockId,
+        }))
+      );
+    }
+  });
+}
+
+export async function pullLatestVersion(projectId: number, versionId: number) {
+  const session = await auth();
+  if (!session || !session.user) throw new Error('Session not found');
+  const user = session.user;
+  if (!user || !user.id) throw new Error('User not found');
+
+  const newVersionId = await db.transaction(async (tx) => {
+    await tx.delete(versions).where(eq(versions.id, versionId));
+
+    const latestVersion = await tx
       .select({
         latestChildren: versions.children,
         latestVersionId: versions.id,
@@ -55,75 +104,34 @@ export async function shareProject(
       )
       .innerJoin(projects, eq(projects.id, versions.projectId));
 
-    const newVersion = await db
+    const newVersion = await tx
       .insert(versions)
       .values({
         versionCount: -1,
         children: latestVersion[0].latestChildren,
         parentVersionId: latestVersion[0].latestVersionId,
         projectId,
-        userId: user[0].id,
+        userId: user.id,
       })
       .returning({ id: versions.id });
 
-    const latestNodes = await db
+    const latestNodes = await tx
       .select()
       .from(docNodes)
       .where(eq(docNodes.versionId, latestVersion[0].latestVersionId));
 
-    await db.insert(docNodes).values(
+    await tx.insert(docNodes).values(
       latestNodes.map((node) => ({
         versionId: newVersion[0].id,
         contentBlockId: node.contentBlockId,
+        path: node.path,
       }))
     );
-  }
-}
 
-export async function pullLatestVersion(projectId: number, versionId: number) {
-  const session = await auth();
-  if (!session || !session.user) throw new Error('Session not found');
-  const user = session.user;
-  if (!user || !user.id) throw new Error('User not found');
+    return newVersion[0].id;
+  });
 
-  await db.delete(versions).where(eq(versions.id, versionId));
-
-  const latestVersion = await db
-    .select({ latestChildren: versions.children, latestVersionId: versions.id })
-    .from(versions)
-    .where(
-      and(
-        eq(projects.currentVersionCount, versions.versionCount),
-        eq(projects.id, projectId)
-      )
-    )
-    .innerJoin(projects, eq(projects.id, versions.projectId));
-
-  const newVersion = await db
-    .insert(versions)
-    .values({
-      versionCount: -1,
-      children: latestVersion[0].latestChildren,
-      parentVersionId: latestVersion[0].latestVersionId,
-      projectId,
-      userId: user.id,
-    })
-    .returning({ id: versions.id });
-
-  const latestNodes = await db
-    .select()
-    .from(docNodes)
-    .where(eq(docNodes.versionId, latestVersion[0].latestVersionId));
-
-  await db.insert(docNodes).values(
-    latestNodes.map((node) => ({
-      versionId: newVersion[0].id,
-      contentBlockId: node.contentBlockId,
-      path: node.path,
-    }))
-  );
-
-  redirect(`/${newVersion[0].id}`);
+  redirect(`/${newVersionId}`);
 }
 
 export async function pushVersion(
@@ -136,45 +144,49 @@ export async function pushVersion(
   const user = session.user;
   if (!user || !user.id) throw new Error('User not found');
 
-  const latestVersion = await db
-    .update(versions)
-    .set({ versionCount: currentVersion + 1, userId: null })
-    .where(eq(versions.id, versionId))
-    .returning({
-      latestVersionChildren: versions.children,
-      latestVersionId: versions.id,
-    });
+  const latestVersionId = await db.transaction(async (tx) => {
+    const latestVersion = await tx
+      .update(versions)
+      .set({ versionCount: currentVersion + 1, userId: null })
+      .where(eq(versions.id, versionId))
+      .returning({
+        latestVersionChildren: versions.children,
+        latestVersionId: versions.id,
+      });
 
-  await db
-    .update(projects)
-    .set({ currentVersionCount: currentVersion + 1 })
-    .where(eq(projects.id, projectId));
+    await tx
+      .update(projects)
+      .set({ currentVersionCount: currentVersion + 1 })
+      .where(eq(projects.id, projectId));
 
-  const newVersion = await db
-    .insert(versions)
-    .values({
-      versionCount: -1,
-      children: latestVersion[0].latestVersionChildren,
-      parentVersionId: latestVersion[0].latestVersionId,
-      projectId,
-      userId: user.id,
-    })
-    .returning({ id: versions.id });
+    const newVersion = await tx
+      .insert(versions)
+      .values({
+        versionCount: -1,
+        children: latestVersion[0].latestVersionChildren,
+        parentVersionId: latestVersion[0].latestVersionId,
+        projectId,
+        userId: user.id,
+      })
+      .returning({ id: versions.id });
 
-  const latestNodes = await db
-    .select()
-    .from(docNodes)
-    .where(eq(docNodes.versionId, latestVersion[0].latestVersionId));
+    const latestNodes = await tx
+      .select()
+      .from(docNodes)
+      .where(eq(docNodes.versionId, latestVersion[0].latestVersionId));
 
-  await db.insert(docNodes).values(
-    latestNodes.map((node) => ({
-      versionId: newVersion[0].id,
-      contentBlockId: node.contentBlockId,
-      path: node.path,
-    }))
-  );
+    await tx.insert(docNodes).values(
+      latestNodes.map((node) => ({
+        versionId: newVersion[0].id,
+        contentBlockId: node.contentBlockId,
+        path: node.path,
+      }))
+    );
 
-  redirect(`/${latestVersion[0].latestVersionId}`);
+    return latestVersion[0].latestVersionId;
+  });
+
+  redirect(`/${latestVersionId}`);
 }
 
 export async function fetchProjects() {
@@ -256,55 +268,57 @@ export async function createProject(name: string, description?: string) {
   const user = session.user;
   if (!user || !user.id) throw new Error('User not found');
 
-  const projectRes = await db
-    .insert(projects)
-    .values({
-      name,
-      currentVersionCount: 0,
-      description,
-    })
-    .returning({ id: projects.id });
+  await db.transaction(async (tx) => {
+    const projectRes = await tx
+      .insert(projects)
+      .values({
+        name,
+        currentVersionCount: 0,
+        description,
+      })
+      .returning({ id: projects.id });
 
-  await db.insert(permissions).values({
-    userId: user.id,
-    projectId: projectRes[0].id,
-    role: 'admin',
-  });
+    await tx.insert(permissions).values({
+      userId: user.id!,
+      projectId: projectRes[0].id,
+      role: 'admin',
+    });
 
-  // create initial version
-  const initVersionRes = await db
-    .insert(versions)
-    .values({
-      versionCount: 0,
-      projectId: projectRes[0].id,
-      parentVersionId: 0, // 0 for root
-    })
-    .returning({ id: versions.id });
-  const blockContentRes = await db
-    .insert(contentBlocks)
-    .values({
-      parentVersionId: initVersionRes[0].id,
-      projectId: projectRes[0].id,
-    })
-    .returning({ id: contentBlocks.id });
-  await db.insert(docNodes).values({
-    versionId: initVersionRes[0].id,
-    contentBlockId: blockContentRes[0].id,
-  });
+    // create initial version
+    const initVersionRes = await tx
+      .insert(versions)
+      .values({
+        versionCount: 0,
+        projectId: projectRes[0].id,
+        parentVersionId: 0, // 0 for root
+      })
+      .returning({ id: versions.id });
+    const blockContentRes = await tx
+      .insert(contentBlocks)
+      .values({
+        parentVersionId: initVersionRes[0].id,
+        projectId: projectRes[0].id,
+      })
+      .returning({ id: contentBlocks.id });
+    await tx.insert(docNodes).values({
+      versionId: initVersionRes[0].id,
+      contentBlockId: blockContentRes[0].id,
+    });
 
-  // create user branch
-  const branchVersionRes = await db
-    .insert(versions)
-    .values({
-      versionCount: -1,
-      parentVersionId: initVersionRes[0].id,
-      projectId: projectRes[0].id,
-      userId: user.id,
-    })
-    .returning({ id: versions.id });
-  await db.insert(docNodes).values({
-    versionId: branchVersionRes[0].id,
-    contentBlockId: blockContentRes[0].id,
+    // create user branch
+    const branchVersionRes = await tx
+      .insert(versions)
+      .values({
+        versionCount: -1,
+        parentVersionId: initVersionRes[0].id,
+        projectId: projectRes[0].id,
+        userId: user.id,
+      })
+      .returning({ id: versions.id });
+    await tx.insert(docNodes).values({
+      versionId: branchVersionRes[0].id,
+      contentBlockId: blockContentRes[0].id,
+    });
   });
 
   return true;
@@ -319,18 +333,20 @@ export async function createDoc(
   versionId: number,
   path?: string
 ) {
-  const contentBlock = await db
-    .insert(contentBlocks)
-    .values({
-      parentVersionId: versionId,
-      projectId,
-    })
-    .returning({ id: contentBlocks.id });
+  await db.transaction(async (tx) => {
+    const contentBlock = await tx
+      .insert(contentBlocks)
+      .values({
+        parentVersionId: versionId,
+        projectId,
+      })
+      .returning({ id: contentBlocks.id });
 
-  await db.insert(docNodes).values({
-    versionId,
-    path,
-    contentBlockId: contentBlock[0].id,
+    await tx.insert(docNodes).values({
+      versionId,
+      path,
+      contentBlockId: contentBlock[0].id,
+    });
   });
 }
 
@@ -366,42 +382,44 @@ export async function updateDocContent(
   path: string,
   content: YooptaContentValue
 ) {
-  const blockContentRes = await db
-    .select({
-      parentVersionId: contentBlocks.parentVersionId,
-      blockContentId: contentBlocks.id,
-      projectId: contentBlocks.projectId,
-      docNodeId: docNodes.id,
-    })
-    .from(docNodes)
-    .where(
-      and(
-        eq(docNodes.versionId, versionId),
-        path ? eq(docNodes.path, path) : isNull(docNodes.path)
-      )
-    )
-    .leftJoin(contentBlocks, eq(docNodes.contentBlockId, contentBlocks.id));
-
-  if (blockContentRes[0].parentVersionId === versionId) {
-    await db
-      .update(contentBlocks)
-      .set({ content })
-      .where(eq(contentBlocks.id, blockContentRes[0].blockContentId!));
-  } else {
-    const newBlockContentRes = await db
-      .insert(contentBlocks)
-      .values({
-        projectId: blockContentRes[0].projectId!,
-        parentVersionId: versionId,
-        content,
+  await db.transaction(async (tx) => {
+    const blockContentRes = await tx
+      .select({
+        parentVersionId: contentBlocks.parentVersionId,
+        blockContentId: contentBlocks.id,
+        projectId: contentBlocks.projectId,
+        docNodeId: docNodes.id,
       })
-      .returning({ id: contentBlocks.id });
+      .from(docNodes)
+      .where(
+        and(
+          eq(docNodes.versionId, versionId),
+          path ? eq(docNodes.path, path) : isNull(docNodes.path)
+        )
+      )
+      .leftJoin(contentBlocks, eq(docNodes.contentBlockId, contentBlocks.id));
 
-    await db
-      .update(docNodes)
-      .set({ contentBlockId: newBlockContentRes[0].id })
-      .where(eq(docNodes.id, blockContentRes[0].docNodeId));
-  }
+    if (blockContentRes[0].parentVersionId === versionId) {
+      await tx
+        .update(contentBlocks)
+        .set({ content })
+        .where(eq(contentBlocks.id, blockContentRes[0].blockContentId!));
+    } else {
+      const newBlockContentRes = await tx
+        .insert(contentBlocks)
+        .values({
+          projectId: blockContentRes[0].projectId!,
+          parentVersionId: versionId,
+          content,
+        })
+        .returning({ id: contentBlocks.id });
+
+      await tx
+        .update(docNodes)
+        .set({ contentBlockId: newBlockContentRes[0].id })
+        .where(eq(docNodes.id, blockContentRes[0].docNodeId));
+    }
+  });
 
   return true;
 }

@@ -41,7 +41,6 @@ export async function ProjectList() {
           <CardFooter className="grid grid-cols-2 gap-2">
             <Link
               href={`/${project.userVersionId}`} // TODO: refactor to project.name/project.version
-              prefetch={false}
               className="flex items-center justify-center"
             >
               <Button
@@ -54,7 +53,6 @@ export async function ProjectList() {
             </Link>
             <Link
               href={`/${project.currentVersionId}`} // TODO: refactor to project.name/project.version
-              prefetch={false}
               className="flex items-center justify-center"
             >
               <Button
