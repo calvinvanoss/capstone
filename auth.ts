@@ -8,18 +8,19 @@ import { encode as defaultEncode } from 'next-auth/jwt';
 import { v4 as uuid } from 'uuid';
 
 const adapter = DrizzleAdapter(db);
+const providers = [GitHub];
 
 export const { handlers, auth, signIn, signOut } =
   process.env.NODE_ENV === 'production'
     ? NextAuth({
         adapter,
-        providers: [GitHub],
+        providers,
       })
       // TODO: fix signin redirects
     : NextAuth({
         adapter,
         providers: [
-          GitHub,
+          ...providers,
           Credentials({
             id: 'password',
             name: 'Password',

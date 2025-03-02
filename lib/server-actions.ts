@@ -15,6 +15,7 @@ import { YooptaContentValue } from '@yoopta/editor';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 
+// TODO: refactor to use transactions
 export async function shareProject(
   projectId: number,
   email: string,
