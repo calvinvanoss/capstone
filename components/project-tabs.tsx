@@ -19,7 +19,7 @@ export function ProjectTabs() {
         {project.children.map((tab) => (
           <TabItem key={tab.slug} doc={tab} />
         ))}
-        <NewTabButton />
+        {project.editable && <NewTabButton />}
       </TabsList>
     </Tabs>
   );

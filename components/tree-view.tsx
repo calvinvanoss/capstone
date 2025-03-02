@@ -127,7 +127,8 @@ const TreeNode: React.FC<{
                 )}
               </div>
             </div>
-            {isHovering &&
+            {project.editable &&
+              isHovering &&
               (isExpanded ? (
                 <NewDocButton parentPath={path} index={0} />
               ) : (
@@ -230,6 +231,7 @@ export const TreeView = ({
   slugs: string[];
   tree: DocNode[];
 }) => {
+  const { project } = useProject();
   const [isHoveringTop, setIsHoveringTop] = useState(false);
 
   return (
@@ -239,7 +241,7 @@ export const TreeView = ({
         onMouseEnter={() => setIsHoveringTop(true)}
         onMouseLeave={() => setIsHoveringTop(false)}
       >
-        {(isHoveringTop || tree.length === 0) && (
+        {project.editable && (isHoveringTop || tree.length === 0) && (
           <NewDocButton parentPath={slugs[0]} index={0} />
         )}
       </div>

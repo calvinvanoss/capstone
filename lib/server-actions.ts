@@ -173,7 +173,7 @@ export async function pushVersion(
     }))
   );
 
-  redirect(`/${newVersion[0].id}`);
+  redirect(`/${latestVersion[0].latestVersionId}`);
 }
 
 export async function fetchProjects() {
