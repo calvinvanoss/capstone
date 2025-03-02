@@ -13,14 +13,24 @@ const docNodeSchema: z.ZodType<DocNode> = baseDocNodeSchema.extend({
 const treeSchema = z.array(docNodeSchema);
 
 // parsers
-export const projectVersionSchema = z.object({
-  projectName: z.string(),
-  children: treeSchema,
-  versionId: z.number(),
-  version: z.string(),
-  parentVersionId: z.number().nullable(),
-  projectId: z.number(),
-});
+export const projectVersionSchema = z
+  .object({
+    projectName: z.string(),
+    children: treeSchema,
+    versionId: z.number(),
+    versionCount: z.number(),
+    parentVersionId: z.number().nullable(),
+    projectId: z.number(),
+    versionUserId: z.string().nullable(),
+    currentVersionCount: z.number(),
+  })
+  .transform((data) => {
+    const editable = !!data.versionUserId && data.versionCount === -1;
+    return {
+      ...data,
+      editable,
+    };
+  });
 
 // type definitions
 export type DocNode = z.infer<typeof baseDocNodeSchema> & {

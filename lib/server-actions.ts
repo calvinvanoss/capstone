@@ -10,14 +10,171 @@ import {
   users,
   versions,
 } from '@/lib/db/schema';
-import { and, eq, isNull } from 'drizzle-orm';
+import { aliasedTable, and, eq, isNull } from 'drizzle-orm';
 import { YooptaContentValue } from '@yoopta/editor';
 import { auth } from '@/auth';
+import { redirect } from 'next/navigation';
 
-/* NAMING CONVENTION:
-slugs: string[] => array of slugs
-path: string => slugs joined by '/'
-*/
+export async function shareProject(
+  projectId: number,
+  email: string,
+  role: 'admin' | 'editor' | 'viewer'
+) {
+  const user = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, email));
+
+  if (user.length !== 1) throw new Error('User not found');
+
+  await db
+    .insert(permissions)
+    .values({
+      userId: user[0].id,
+      projectId,
+      role,
+    })
+    .onConflictDoUpdate({
+      target: [permissions.projectId, permissions.userId],
+      set: { role },
+    });
+
+  if (role === 'admin' || role === 'editor') {
+    const latestVersion = await db
+      .select({
+        latestChildren: versions.children,
+        latestVersionId: versions.id,
+      })
+      .from(versions)
+      .where(
+        and(
+          eq(projects.currentVersionCount, versions.versionCount),
+          eq(projects.id, projectId)
+        )
+      )
+      .innerJoin(projects, eq(projects.id, versions.projectId));
+
+    const newVersion = await db
+      .insert(versions)
+      .values({
+        versionCount: -1,
+        children: latestVersion[0].latestChildren,
+        parentVersionId: latestVersion[0].latestVersionId,
+        projectId,
+        userId: user[0].id,
+      })
+      .returning({ id: versions.id });
+
+    const latestNodes = await db
+      .select()
+      .from(docNodes)
+      .where(eq(docNodes.versionId, latestVersion[0].latestVersionId));
+
+    await db.insert(docNodes).values(
+      latestNodes.map((node) => ({
+        versionId: newVersion[0].id,
+        contentBlockId: node.contentBlockId,
+      }))
+    );
+  }
+}
+
+export async function pullLatestVersion(projectId: number, versionId: number) {
+  const session = await auth();
+  if (!session || !session.user) throw new Error('Session not found');
+  const user = session.user;
+  if (!user || !user.id) throw new Error('User not found');
+
+  await db.delete(versions).where(eq(versions.id, versionId));
+
+  const latestVersion = await db
+    .select({ latestChildren: versions.children, latestVersionId: versions.id })
+    .from(versions)
+    .where(
+      and(
+        eq(projects.currentVersionCount, versions.versionCount),
+        eq(projects.id, projectId)
+      )
+    )
+    .innerJoin(projects, eq(projects.id, versions.projectId));
+
+  const newVersion = await db
+    .insert(versions)
+    .values({
+      versionCount: -1,
+      children: latestVersion[0].latestChildren,
+      parentVersionId: latestVersion[0].latestVersionId,
+      projectId,
+      userId: user.id,
+    })
+    .returning({ id: versions.id });
+
+  const latestNodes = await db
+    .select()
+    .from(docNodes)
+    .where(eq(docNodes.versionId, latestVersion[0].latestVersionId));
+
+  await db.insert(docNodes).values(
+    latestNodes.map((node) => ({
+      versionId: newVersion[0].id,
+      contentBlockId: node.contentBlockId,
+      path: node.path,
+    }))
+  );
+
+  redirect(`/${newVersion[0].id}`);
+}
+
+export async function pushVersion(
+  projectId: number,
+  versionId: number,
+  currentVersion: number
+) {
+  const session = await auth();
+  if (!session || !session.user) throw new Error('Session not found');
+  const user = session.user;
+  if (!user || !user.id) throw new Error('User not found');
+
+  const latestVersion = await db
+    .update(versions)
+    .set({ versionCount: currentVersion + 1, userId: null })
+    .where(eq(versions.id, versionId))
+    .returning({
+      latestVersionChildren: versions.children,
+      latestVersionId: versions.id,
+    });
+
+  await db
+    .update(projects)
+    .set({ currentVersionCount: currentVersion + 1 })
+    .where(eq(projects.id, projectId));
+
+  const newVersion = await db
+    .insert(versions)
+    .values({
+      versionCount: -1,
+      children: latestVersion[0].latestVersionChildren,
+      parentVersionId: latestVersion[0].latestVersionId,
+      projectId,
+      userId: user.id,
+    })
+    .returning({ id: versions.id });
+
+  const latestNodes = await db
+    .select()
+    .from(docNodes)
+    .where(eq(docNodes.versionId, latestVersion[0].latestVersionId));
+
+  await db.insert(docNodes).values(
+    latestNodes.map((node) => ({
+      versionId: newVersion[0].id,
+      contentBlockId: node.contentBlockId,
+      path: node.path,
+    }))
+  );
+
+  redirect(`/${newVersion[0].id}`);
+}
 
 export async function fetchProjects() {
   const session = await auth();
@@ -25,22 +182,43 @@ export async function fetchProjects() {
   const user = session.user;
   if (!user || !user.id) throw new Error('User not found');
 
+  const userVersion = aliasedTable(versions, 'user_version');
+  const currentVersion = aliasedTable(versions, 'current_version');
+
   const res = await db
     .select({
       id: projects.id,
       name: projects.name,
       description: projects.description,
-      currentVersion: projects.currentVersion,
+      currentVersion: projects.currentVersionCount,
       role: permissions.role,
-      versionId: versions.id,
+      userVersionId: userVersion.id,
+      currentVersionId: currentVersion.id,
     })
     .from(projects)
-    .where(eq(permissions.userId, user.id))
-    .leftJoin(permissions, eq(permissions.projectId, projects.id))
+    .innerJoin(
+      permissions,
+      and(
+        eq(permissions.projectId, projects.id),
+        eq(permissions.userId, user.id)
+      )
+    )
     .leftJoin(
-      versions,
-      and(eq(versions.projectId, projects.id), eq(versions.userId, user.id))
-    );
+      userVersion,
+      and(
+        eq(userVersion.projectId, projects.id),
+        eq(userVersion.userId, user.id)
+      )
+    )
+    .leftJoin(
+      currentVersion,
+      and(
+        eq(currentVersion.projectId, projects.id),
+        eq(currentVersion.versionCount, projects.currentVersionCount)
+      )
+    )
+    .where(eq(permissions.userId, user.id))
+    .execute();
 
   return res;
 }
@@ -54,15 +232,16 @@ export async function getVersion(versionId: number) {
   const res = await db
     .select({
       versionId: versions.id,
-      version: versions.version,
+      versionCount: versions.versionCount,
       children: versions.children,
       parentVersionId: versions.parentVersionId,
-      userId: versions.userId,
+      versionUserId: versions.userId,
       projectId: versions.projectId,
       projectName: projects.name,
+      currentVersionCount: projects.currentVersionCount,
     })
     .from(versions)
-    .where(and(eq(versions.userId, user.id), eq(versions.id, versionId)))
+    .where(eq(versions.id, versionId))
     .leftJoin(projects, eq(projects.id, versions.projectId));
 
   if (res.length !== 1) throw new Error('Project not found');
@@ -80,7 +259,7 @@ export async function createProject(name: string, description?: string) {
     .insert(projects)
     .values({
       name,
-      currentVersion: '0.0.0',
+      currentVersionCount: 0,
       description,
     })
     .returning({ id: projects.id });
@@ -91,25 +270,39 @@ export async function createProject(name: string, description?: string) {
     role: 'admin',
   });
 
-  const versionRes = await db
+  // create initial version
+  const initVersionRes = await db
     .insert(versions)
     .values({
-      version: '0.0.0',
+      versionCount: 0,
+      projectId: projectRes[0].id,
+      parentVersionId: 0, // 0 for root
+    })
+    .returning({ id: versions.id });
+  const blockContentRes = await db
+    .insert(contentBlocks)
+    .values({
+      parentVersionId: initVersionRes[0].id,
+      projectId: projectRes[0].id,
+    })
+    .returning({ id: contentBlocks.id });
+  await db.insert(docNodes).values({
+    versionId: initVersionRes[0].id,
+    contentBlockId: blockContentRes[0].id,
+  });
+
+  // create user branch
+  const branchVersionRes = await db
+    .insert(versions)
+    .values({
+      versionCount: -1,
+      parentVersionId: initVersionRes[0].id,
       projectId: projectRes[0].id,
       userId: user.id,
     })
     .returning({ id: versions.id });
-
-  const blockContentRes = await db
-    .insert(contentBlocks)
-    .values({
-      parentVersionId: versionRes[0].id,
-      projectId: projectRes[0].id,
-    })
-    .returning({ id: contentBlocks.id });
-
   await db.insert(docNodes).values({
-    versionId: versionRes[0].id,
+    versionId: branchVersionRes[0].id,
     contentBlockId: blockContentRes[0].id,
   });
 
@@ -210,6 +403,20 @@ export async function updateDocContent(
   }
 
   return true;
+}
+
+export async function putProject(
+  projectId: number,
+  name?: string,
+  description?: string
+) {
+  await db
+    .update(projects)
+    .set({
+      name,
+      description,
+    })
+    .where(eq(projects.id, projectId));
 }
 
 export async function authorizeCredentials(username: string) {

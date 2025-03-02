@@ -182,6 +182,7 @@ export default function Editor({ path }: { path: string }) {
           onChange={onChange}
           tools={TOOLS}
           marks={MARKS}
+          readOnly={!project.editable}
           autoFocus
         />
       </div>

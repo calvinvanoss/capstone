@@ -20,14 +20,15 @@ export const projects = pgTable('project', {
   id: serial().primaryKey(),
   name: text().notNull(),
   description: text(),
-  currentVersion: text('current_version').notNull(),
+  currentVersionCount: integer('current_version_count').notNull(),
 });
 
+// TODO: add releases with semantic versioning: MAJOR.MINOR.PATCH?
 export const versions = pgTable('version', {
   id: serial().primaryKey(),
-  version: text().notNull(), // semantic versioning: MAJOR.MINOR.PATCH
+  versionCount: integer().notNull(), // -1 for user branch
   children: jsonb().default([]).notNull(), // TODO: rename tree?
-  parentVersionId: integer('parent_version_id'),
+  parentVersionId: integer('parent_version_id').notNull(), // 0 for root
   userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
   projectId: integer('project_id')
     .references(() => projects.id, { onDelete: 'cascade' })
@@ -57,17 +58,19 @@ export const contentBlocks = pgTable('content_block', {
     .notNull(),
 });
 
-// TODO: composite idx on [userId, projectId]?
-export const permissions = pgTable('permission', {
-  id: serial().primaryKey(),
-  userId: text('user_id')
-    .references(() => users.id, { onDelete: 'cascade' })
-    .notNull(),
-  projectId: integer('project_id')
-    .references(() => projects.id, { onDelete: 'cascade' })
-    .notNull(),
-  role: roleEnum().notNull(),
-});
+export const permissions = pgTable(
+  'permission',
+  {
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    projectId: integer('project_id')
+      .references(() => projects.id, { onDelete: 'cascade' })
+      .notNull(),
+    role: roleEnum().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.projectId, table.userId] })]
+);
 
 // automatically filled by authjs
 export const users = pgTable('user', {

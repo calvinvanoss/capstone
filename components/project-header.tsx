@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { useProject } from '@/lib/store';
 import { Button } from './ui/button';
 import { useState } from 'react';
+import { pullLatestVersion, pushVersion } from '@/lib/server-actions';
 
 export function ProjectHeader() {
   const { project } = useProject();
@@ -27,14 +28,21 @@ export function ProjectHeader() {
   const [isPulling, setIsPulling] = useState(false);
 
   const handleResync = async () => {
-    console.log('Resyncing project...');
+    setIsSyncing(true);
+    await pullLatestVersion(project.projectId, project.versionId);
   };
 
   const handlePush = async () => {
-    console.log('Publishing project...');
+    setIsPushing(true);
+    await pushVersion(
+      project.projectId,
+      project.versionId,
+      project.currentVersionCount
+    );
   };
 
   const handlePull = async () => {
+    // TODO: implement rebase
     console.log('Pulling project...');
   };
 
