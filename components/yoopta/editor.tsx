@@ -5,7 +5,7 @@ import YooptaEditor, {
   type YooptaContentValue,
   type YooptaOnChangeOptions,
 } from '@yoopta/editor';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Paragraph from '@yoopta/paragraph';
 import Blockquote from '@yoopta/blockquote';
 import LinkTool, { DefaultLinkToolRender } from '@yoopta/link-tool';
@@ -32,9 +32,16 @@ import { HeadingOne, HeadingThree, HeadingTwo } from '@yoopta/headings';
 import Code from '@yoopta/code';
 import Table from '@yoopta/table';
 import Divider from '@yoopta/divider';
-import { EditButton } from '../edit-button';
-import { updateDocContent } from '@/lib/server-actions';
+import { getDocContent, updateDocContent } from '@/lib/server-actions';
 import { useProject } from '@/lib/store';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../ui/tooltip';
+import { RotateCcw, Save } from 'lucide-react';
+import { Button } from '../ui/button';
 
 const MARKS = [Bold, Italic, CodeMark, Underline, Strike, Highlight];
 
@@ -82,65 +89,99 @@ const TOOLS = {
   },
 };
 
-export default function Editor({
-  slugs,
-  content,
-}: {
-  slugs: string[];
-  content: YooptaContentValue | undefined;
-}) {
+export default function Editor({ path }: { path: string }) {
   const { project } = useProject();
   const editor = useMemo(() => createYooptaEditor(), []);
-  const [value, setValue] = useState(content);
-  const [savedValue, setSavedValue] = useState<YooptaContentValue | undefined>(
-    content
-  );
-  const [isEditing, setIsEditing] = useState(false);
+  const [savedContent, setSavedContent] = useState<
+    YooptaContentValue | undefined
+  >();
+  const [content, setContent] = useState<YooptaContentValue | undefined>();
+  const [renderkey, setRenderKey] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      const blockContent = await getDocContent(project.versionId, path);
+      setSavedContent(blockContent.content as YooptaContentValue | undefined);
+      setContent(blockContent.content as YooptaContentValue | undefined);
+      setIsLoading(false);
+    };
+    fetchContent();
+  }, [path, project.versionId]);
+
+  const isModified = savedContent !== content;
 
   const onChange = (
     value: YooptaContentValue,
     options: YooptaOnChangeOptions
   ) => {
-    setValue(value);
+    setContent(value);
   };
 
-  const handleEdit = () => {
-    setIsEditing(true);
+  const handleUndo = async () => {
+    setContent(savedContent);
+    setRenderKey(!renderkey);
   };
 
   const handleSave = () => {
-    setSavedValue(value);
-    setIsEditing(false);
-    if (value != undefined) {
-      updateDocContent(project.versionId, slugs.join('/'), value);
+    if (content) {
+      setSavedContent(content);
+      updateDocContent(project.versionId, path, content);
     }
   };
 
-  const handleCancel = () => {
-    setValue(savedValue);
-    setIsEditing(false);
-  };
-
+  if (isLoading) return null;
   return (
     <div className="flex-1">
-      <div className="mb-4">
-        <EditButton
-          isEditing={isEditing}
-          onEdit={handleEdit}
-          onSave={handleSave}
-          onCancel={handleCancel}
-        />
+      <div className="mb-4 flex space-x-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleUndo}
+                disabled={!isModified}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <RotateCcw className="h-4 w-4" />
+                <span className="sr-only">Undo</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Undo local changes</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSave}
+                disabled={!isModified}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Save className="h-4 w-4" />
+                <span className="sr-only">Save</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Save local changes</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
       <div className="border border-gray-300 rounded-md p-2">
         <YooptaEditor
-          key={isEditing ? 'editing' : 'readonly'} // forces rerender
+          key={renderkey ? 'rkeyt' : 'rkeyf'}
           editor={editor}
           plugins={plugins}
-          value={value}
+          value={content}
           onChange={onChange}
           tools={TOOLS}
           marks={MARKS}
-          readOnly={!isEditing}
           autoFocus
         />
       </div>
