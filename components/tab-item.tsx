@@ -44,7 +44,19 @@ export function TabItem({ doc }: { doc: DocNode }) {
     setIsDeleteOpen(false);
   };
 
-  // TODO: abstract context menu and dialogs into reusable wrapper component
+  if (!project.editable) {
+    return (
+      <TabsTrigger
+        value={doc.slug}
+        className="px-3 py-1.5 text-sm font-medium transition-all rounded-md data-[state=active]:bg-muted data-[state=active]:text-foreground flex flex-col items-center justify-between"
+      >
+        <Link href={`/${project.versionId}/${doc.slug}`} prefetch={false}>
+          {doc.name}
+        </Link>
+      </TabsTrigger>
+    );
+  }
+
   return (
     <>
       <ContextMenu

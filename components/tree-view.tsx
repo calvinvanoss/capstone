@@ -70,6 +70,78 @@ const TreeNode: React.FC<{
     setIsDeleteOpen(false);
   };
 
+  if (!project.editable) {
+    return (
+      <>
+        <div
+          onMouseEnter={() => setIsHovering(true)}
+          onMouseLeave={() => setIsHovering(false)}
+          className="relative group"
+        >
+          <div
+            className={cn(
+              'flex items-center py-1 px-2 rounded-md transition-colors relative',
+              isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'
+            )}
+          >
+            <div
+              className="flex items-center flex-grow py-0.5 text-sm"
+              style={{ paddingLeft: `${depth * 8 + 4}px` }}
+            >
+              <Link
+                href={`/${project.versionId}/${path}`}
+                prefetch={false}
+                className={cn(
+                  'flex-grow flex items-center truncate',
+                  isActive ? 'font-medium' : '',
+                  'children' in node ? 'font-medium' : '',
+                  !isActive && 'hover:text-primary'
+                )}
+              >
+                <span className="truncate">{node.name}</span>
+              </Link>
+              {'children' in node && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="p-0 h-5 w-5 ml-1"
+                  onClick={toggleExpand}
+                >
+                  {isExpanded ? (
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
+          {project.editable &&
+            isHovering &&
+            (isExpanded ? (
+              <NewDocButton parentPath={path} index={0} />
+            ) : (
+              <NewDocButton parentPath={parentPath} index={index + 1} />
+            ))}
+        </div>
+        {isExpanded && node.children && (
+          <div className="mt-1">
+            {node.children.map((child, childIndex) => (
+              <TreeNode
+                key={child.slug}
+                node={child}
+                index={childIndex}
+                depth={depth + 1}
+                activePath={activePath}
+                parentPath={path}
+              />
+            ))}
+          </div>
+        )}
+      </>
+    );
+  }
+
   return (
     <>
       <ContextMenu
