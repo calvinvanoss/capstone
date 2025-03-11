@@ -8,7 +8,7 @@ This project is a web-based documentation builder built on top of Yoopta-Editor,
 - [Features](#features)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
-  - [Installation and setup](#installation-and-setup)
+  - [Installation and Setup](#installation-and-setup)
   - [Running the Application](#running-the-application)
 
 ## Introduction
@@ -34,7 +34,7 @@ Before you begin, ensure you have met the following requirements:
 - npm
 - Neon account
 
-### Installation/Setup
+### Installation and Setup
 
 1. Clone the repository:
 
