@@ -4,17 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "sandbox": "npx ampx sandbox",
     "studio": "npx drizzle-kit studio",
-    "clean": "npx ampx sandbox delete",
     "build": "next build",
     "start": "next start",
     "lint": "next lint --fix"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.8.0",
-    "@aws-amplify/adapter-nextjs": "^1.2.28",
-    "@aws-amplify/ui-react": "^6.5.5",
     "@neondatabase/serverless": "^0.10.4",
     "@next/env": "^15.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.6",
@@ -50,7 +46,6 @@
     "@yoopta/table": "^4.9.4",
     "@yoopta/toolbar": "^4.9.4",
     "@yoopta/video": "^4.9.4",
-    "aws-amplify": "^6.8.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.40.0",
@@ -69,14 +64,9 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@aws-amplify/backend": "^1.7.0",
-    "@aws-amplify/backend-cli": "^1.4.2",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "aws-cdk": "^2.167.1",
-    "aws-cdk-lib": "^2.167.1",
-    "constructs": "^10.4.2",
     "drizzle-kit": "^0.30.5",
     "esbuild": "^0.24.0",
     "eslint": "^8",
