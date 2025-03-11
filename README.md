@@ -1,6 +1,6 @@
 # Web-Based Documentation Builder
 
-This project is a web-based documentation builder built on top of Yoopta-Editor, using Next.Js and Neon.
+This project is a web-based documentation builder built on top of Yoopta-Editor, using Next and Neon.
 
 ## Table of Contents
 
@@ -8,7 +8,7 @@ This project is a web-based documentation builder built on top of Yoopta-Editor,
 - [Features](#features)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
+  - [Installation and setup](#installation-and-setup)
   - [Running the Application](#running-the-application)
 
 ## Introduction
@@ -21,7 +21,8 @@ This project aims to provide an easy way to build documentation style websites u
 - Collaboration features
 - Media upload *(coming soon...)*
 - AI/fulltext search *(coming soon...)*
-- Text to speech integration *(coming soon...)*
+- Text to speech *(coming soon...)*
+- AI autocomplete *(coming soon...)*
 
 ## Getting Started
 
@@ -29,11 +30,11 @@ This project aims to provide an easy way to build documentation style websites u
 
 Before you begin, ensure you have met the following requirements:
 
-- Node.js
+- Node
 - npm
 - Neon account
 
-### Installation
+### Installation/Setup
 
 1. Clone the repository:
 
@@ -47,13 +48,19 @@ Before you begin, ensure you have met the following requirements:
     npm install
     ```
 
-3. Setup `.env.local`
+3. Set up local environment:
     
     ```sh
     cp .env.local.example .env.local
     ```
 
     Open `.env.local` and follow the embedded directions to set the env variables.
+
+4. Push database schema:
+
+    ```sh
+    npx drizzle-kit push
+    ```
     
 
 ### Running the Application
@@ -70,4 +77,4 @@ Before you begin, ensure you have met the following requirements:
     ```sh
     npm run studio
     ```
-    go to [`https://local.drizzle.studio`](https://local.drizzle.studio)
+    Open your browser and navigate to [`https://local.drizzle.studio`](https://local.drizzle.studio).
